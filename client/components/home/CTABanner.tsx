@@ -7,7 +7,13 @@ export default function CTABanner() {
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-[1280px] mx-auto">
-        <div className="relative bg-brand-primary overflow-hidden">
+        <div
+          className="relative bg-brand-primary overflow-hidden"
+          style={{
+            clipPath:
+              "polygon(4% 0, 100% 0, 100% 0, 100% 100%, 96% 100%, 0 100%, 0 100%, 0 0)",
+          }}
+        >
           {/* Diagonal darker purple shape */}
           <div
             className="hidden lg:block absolute right-0 top-0 bottom-0 w-[55%]"
