@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   description:
     "Great platform for job seekers searching for new career heights and passionate about startups.",
   icons: {
-    icon: "/assets/favicon.png",
-    apple: "/assets/favicon.png",
+    icon: "/assets/favicon.ico",
+    apple: "/assets/favicon.ico",
   },
 };
 
