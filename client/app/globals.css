@@ -1,4 +1,4 @@
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap');
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -6,21 +6,21 @@
   --foreground: #171717;
 
   /* Brand Colors */
-  --brand-primary: #4640DE;
+  --brand-primary: #4640de;
   --brand-primary-hover: #3a35c4;
-  --brand-primary-light: #F0F0FF;
-  --brand-accent: #26A4FF;
+  --brand-primary-light: #f0f0ff;
+  --brand-accent: #26a4ff;
 
   /* Text Colors */
-  --text-dark: #25324B;
-  --text-body: #515B6F;
-  --text-muted: #7C8493;
-  --text-light: #A8ADB7;
+  --text-dark: #25324b;
+  --text-body: #515b6f;
+  --text-muted: #7c8493;
+  --text-light: #a8adb7;
 
   /* Surface Colors */
   --surface-white: #ffffff;
-  --surface-light: #F8F8FD;
-  --surface-border: #D6DDEB;
+  --surface-light: #f8f8fd;
+  --surface-border: #d6ddeb;
 
   /* Misc */
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
@@ -52,13 +52,13 @@
   --color-surface-border: var(--surface-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: 'Clash Display', sans-serif;
+  --font-display: "Clash Display", sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--text-body);
-  font-family: 'Clash Display', sans-serif;
+  font-family: "Clash Display", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -76,8 +76,12 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideInRight {
@@ -101,8 +105,13 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .animate-fade-in-up {
@@ -131,14 +140,30 @@ body {
 }
 
 /* Stagger delays */
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-600 { animation-delay: 600ms; }
-.delay-700 { animation-delay: 700ms; }
-.delay-800 { animation-delay: 800ms; }
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+.delay-400 {
+  animation-delay: 400ms;
+}
+.delay-500 {
+  animation-delay: 500ms;
+}
+.delay-600 {
+  animation-delay: 600ms;
+}
+.delay-700 {
+  animation-delay: 700ms;
+}
+.delay-800 {
+  animation-delay: 800ms;
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar {

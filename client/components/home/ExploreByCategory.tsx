@@ -18,7 +18,6 @@ interface Category {
   name: string;
   jobs: number;
   icon: React.ElementType;
-  highlighted?: boolean;
 }
 
 const categories: Category[] = [
@@ -31,6 +30,99 @@ const categories: Category[] = [
   { name: "Business", jobs: 211, icon: Briefcase },
   { name: "Human Resource", jobs: 346, icon: Users },
 ];
+
+function CategoryCard({
+  category,
+  index,
+  isVisible,
+}: {
+  category: Category;
+  index: number;
+  isVisible: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = category.icon;
+  const delay = index * 80;
+
+  return (
+    <Link
+      key={category.name}
+      href={`/jobs?category=${category.name.toLowerCase().replace(" ", "-")}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={`
+        group relative flex flex-col p-5 sm:p-6 lg:p-7 border
+        ${isVisible ? "animate-fade-in-up" : "opacity-0"}
+      `}
+      style={{
+        animationDelay: isVisible ? `${delay}ms` : undefined,
+        backgroundColor: hovered ? "var(--brand-primary)" : "#ffffff",
+        borderColor: hovered ? "var(--brand-primary)" : "var(--surface-border)",
+        boxShadow: hovered ? "0 12px 32px rgba(70, 64, 222, 0.25)" : "none",
+        transform: hovered
+          ? "translateY(-6px) scale(1.01)"
+          : "translateY(0) scale(1)",
+        transition:
+          "background-color 400ms cubic-bezier(0.16, 1, 0.3, 1), border-color 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
+    >
+      {/* Icon */}
+      <div
+        className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg mb-4 sm:mb-5"
+        style={{
+          backgroundColor: hovered
+            ? "rgba(255, 255, 255, 0.15)"
+            : "var(--brand-primary-light)",
+          transform: hovered ? "scale(1.1)" : "scale(1)",
+          transition:
+            "background-color 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        <Icon
+          size={22}
+          strokeWidth={1.8}
+          style={{
+            color: hovered ? "#ffffff" : "var(--brand-primary)",
+            transition: "color 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        />
+      </div>
+
+      {/* Category Name */}
+      <h3
+        className="text-base sm:text-lg font-bold mb-1.5 leading-snug"
+        style={{
+          color: hovered ? "#ffffff" : "var(--text-dark)",
+          transition: "color 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        {category.name}
+      </h3>
+
+      {/* Jobs Count + Arrow */}
+      <div className="flex items-center gap-2">
+        <span
+          className="text-sm"
+          style={{
+            color: hovered ? "rgba(255, 255, 255, 0.8)" : "var(--text-body)",
+            transition: "color 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
+          {category.jobs} jobs available
+        </span>
+        <ArrowRight
+          size={16}
+          style={{
+            color: hovered ? "rgba(255, 255, 255, 0.8)" : "var(--text-body)",
+            transform: hovered ? "translateX(4px)" : "translateX(0)",
+            transition:
+              "color 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        />
+      </div>
+    </Link>
+  );
+}
 
 export default function ExploreByCategory() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -83,83 +175,14 @@ export default function ExploreByCategory() {
 
         {/* Category Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-          {categories.map((category, index) => {
-            const Icon = category.icon;
-            const delay = index * 80;
-
-            return (
-              <Link
-                key={category.name}
-                href={`/jobs?category=${category.name.toLowerCase().replace(" ", "-")}`}
-                className={`
-                  group relative flex flex-col p-5 sm:p-6 lg:p-7
-                  border transition-all duration-[var(--transition-base)]
-                  ${
-                    category.highlighted
-                      ? "bg-brand-primary border-brand-primary text-white shadow-lg"
-                      : "bg-white border-surface-border text-text-dark hover:border-brand-primary hover:shadow-[var(--shadow-card)]"
-                  }
-                  transform hover:-translate-y-1 active:scale-[0.98]
-                  ${isVisible ? "animate-fade-in-up" : "opacity-0"}
-                `}
-                style={{
-                  animationDelay: isVisible ? `${delay}ms` : undefined,
-                }}
-              >
-                {/* Icon */}
-                <div
-                  className={`
-                    w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg mb-4 sm:mb-5
-                    transition-transform duration-[var(--transition-base)] group-hover:scale-110
-                    ${
-                      category.highlighted
-                        ? "bg-white/15"
-                        : "bg-brand-primary-light"
-                    }
-                  `}
-                >
-                  <Icon
-                    size={22}
-                    strokeWidth={1.8}
-                    className={
-                      category.highlighted ? "text-white" : "text-brand-primary"
-                    }
-                  />
-                </div>
-
-                {/* Category Name */}
-                <h3
-                  className={`text-base sm:text-lg font-bold mb-1.5 leading-snug ${
-                    category.highlighted ? "text-white" : "text-text-dark"
-                  }`}
-                >
-                  {category.name}
-                </h3>
-
-                {/* Jobs Count + Arrow */}
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-sm ${
-                      category.highlighted ? "text-white/80" : "text-text-body"
-                    }`}
-                  >
-                    {category.jobs} jobs available
-                  </span>
-                  <ArrowRight
-                    size={16}
-                    className={`transition-transform duration-[var(--transition-base)] group-hover:translate-x-1 ${
-                      category.highlighted ? "text-white/80" : "text-text-body"
-                    }`}
-                  />
-                </div>
-
-                {/* Hover glow effect for highlighted card */}
-                {category.highlighted && (
-                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--transition-base)] pointer-events-none" />
-                )}
-              </Link>
-            );
-          })}
+          {categories.map((category, index) => (
+            <CategoryCard
+              key={category.name}
+              category={category}
+              index={index}
+              isVisible={isVisible}
+            />
+          ))}
         </div>
       </div>
     </section>
