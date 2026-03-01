@@ -40,6 +40,7 @@ export default function Button({
         inline-flex items-center justify-center gap-2 rounded-lg font-semibold
         transition-all duration-200 transform active:scale-[0.97]
         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+        cursor-pointer
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}

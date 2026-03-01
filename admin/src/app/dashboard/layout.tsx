@@ -87,7 +87,7 @@ export default function DashboardLayout({
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-sidebar-text hover:bg-white/5 hover:text-white transition-all duration-200"
+                       text-sidebar-text hover:bg-white/5 hover:text-white transition-all duration-200 cursor-pointer"
           >
             <LogOut size={18} />
             Logout

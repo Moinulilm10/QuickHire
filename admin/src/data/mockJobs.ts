@@ -8,6 +8,7 @@ export interface Job {
   description: string;
   salary?: string;
   logoColor: string;
+  logoUrl?: string;
   pdfUrl?: string;
   createdAt: string;
   status: "active" | "expired" | "draft";
