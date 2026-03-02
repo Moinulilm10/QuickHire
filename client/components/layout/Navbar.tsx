@@ -1,9 +1,11 @@
 "use client";
 
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/context/AuthContext";
+import { ChevronDown, LogOut, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const navLinks = [
   { label: "Find Jobs", href: "/jobs" },
@@ -13,11 +15,28 @@ const navLinks = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user, logout, isLoaded } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -53,23 +72,80 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-brand-primary font-bold text-base hover:text-brand-primary-hover transition-colors duration-[var(--transition-fast)]"
-            >
-              Login
-            </Link>
-            <Button href="/signup" variant="primary" size="sm">
-              Sign Up
-            </Button>
+            {isLoaded ? (
+              user ? (
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 py-2 px-3 rounded-full hover:bg-surface-muted transition-colors duration-200 cursor-pointer text-text-dark font-medium border border-surface-border"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold">
+                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                    <span>{user.name}</span>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  <div
+                    className={`absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-surface-border overflow-hidden transition-all duration-200 transform origin-top-right ${
+                      dropdownOpen
+                        ? "scale-100 opacity-100 visible"
+                        : "scale-95 opacity-0 invisible"
+                    }`}
+                  >
+                    <div className="p-2 flex flex-col gap-1">
+                      <Link
+                        href="/profile"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-brand-primary-light hover:text-brand-primary rounded-lg transition-colors cursor-pointer"
+                      >
+                        <User size={16} />
+                        Profile
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          logout();
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer w-full text-left"
+                      >
+                        <LogOut size={16} />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-brand-primary font-bold text-base hover:text-brand-primary-hover transition-colors duration-[var(--transition-fast)] cursor-pointer"
+                  >
+                    Login
+                  </Link>
+                  <Button href="/signup" variant="primary" size="sm">
+                    Sign Up
+                  </Button>
+                </>
+              )
+            ) : (
+              <div className="w-24 h-10 bg-surface-muted animate-pulse rounded-full" />
+            )}
           </div>
 
           {/* Mobile Hamburger */}
           <button
             className="md:hidden relative w-9 h-9 flex items-center justify-center cursor-pointer group"
-            onClick={() => setMobileOpen(!mobileOpen)}
+            onClick={() => {
+              setMobileOpen(!mobileOpen);
+              setDropdownOpen(false);
+            }}
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >
@@ -128,7 +204,7 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-400 ease-in-out ${
-            mobileOpen ? "max-h-[400px] opacity-100 pb-6" : "max-h-0 opacity-0"
+            mobileOpen ? "max-h-[500px] opacity-100 pb-6" : "max-h-0 opacity-0"
           }`}
         >
           <div className="flex flex-col gap-3 pt-2">
@@ -142,23 +218,58 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+
             <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-surface-border">
-              <Button
-                href="/login"
-                variant="outline"
-                size="md"
-                className="w-full"
-              >
-                Login
-              </Button>
-              <Button
-                href="/signup"
-                variant="primary"
-                size="md"
-                className="w-full"
-              >
-                Sign Up
-              </Button>
+              {isLoaded && user ? (
+                <>
+                  <div className="flex items-center gap-3 px-2 py-2">
+                    <div className="w-10 h-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-lg">
+                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                    <div>
+                      <p className="font-bold text-text-dark">{user.name}</p>
+                      <p className="text-xs text-text-muted">{user.email}</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-brand-primary-light hover:text-brand-primary rounded-lg transition-colors cursor-pointer"
+                  >
+                    <User size={16} />
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      logout();
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer w-full text-left"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    href="/login"
+                    variant="outline"
+                    size="md"
+                    className="w-full"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    href="/signup"
+                    variant="primary"
+                    size="md"
+                    className="w-full"
+                  >
+                    Sign Up
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
