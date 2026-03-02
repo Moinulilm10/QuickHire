@@ -1,27 +1,64 @@
 "use client";
 
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth.service";
 import { alertService } from "@/utils/alertService";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 
-export default function Signup() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function SignupPage() {
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    // Clear error on change
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: "" });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!form.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(form.email))
+      newErrors.email = "Enter a valid email";
+    if (!form.password) newErrors.password = "Password is required";
+    else if (form.password.length < 6)
+      newErrors.password = "Minimum 6 characters";
+    if (!form.confirmPassword)
+      newErrors.confirmPassword = "Please confirm your password";
+    else if (form.password !== form.confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!validateForm()) return;
 
+    setLoading(true);
     try {
-      const data = await authService.signup({ name, email, password });
+      const data = await authService.signup({
+        name: form.fullName,
+        email: form.email,
+        password: form.password,
+      });
 
       if (data.success) {
         login(data.token, data.user);
@@ -42,106 +79,270 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12 bg-white flex flex-col justify-center animate-fade-in">
-      <div className="max-w-[480px] w-full mx-auto px-4 sm:px-6">
-        <div className="bg-white p-8 sm:p-10 border border-surface-border rounded-xl shadow-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-[28px] font-bold text-text-dark mb-2">
-              Sign Up Form
-            </h1>
-            <p className="text-text-muted">
-              Register to search over 5000+ jobs.
-            </p>
-          </div>
+    <div className="min-h-screen flex animate-fade-in transition-all duration-300">
+      {/* Left — Brand Panel */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] bg-brand-primary relative overflow-hidden items-center justify-center">
+        <div className="absolute inset-0 opacity-10">
+          <Image
+            src="/assets/Pattern.svg"
+            alt=""
+            fill
+            className="object-cover"
+          />
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-text-dark mb-2">
-                User Name
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="block w-full px-4 py-3 border border-surface-border rounded-lg bg-white text-text-dark placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors"
-                placeholder="Ex. John Doe"
-              />
+        <div className="relative z-10 px-12 xl:px-16 max-w-md">
+          <Link
+            href="/"
+            className="inline-block mb-12 hover:scale-105 transition-transform duration-300"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="16" fill="white" />
+                </svg>
+              </div>
+              <span className="text-white text-2xl font-bold">QuickHire</span>
             </div>
+          </Link>
 
-            <div>
-              <label className="block text-sm font-bold text-text-dark mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full px-4 py-3 border border-surface-border rounded-lg bg-white text-text-dark placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors"
-                placeholder="Ex. johndoe@gmail.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-text-dark mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full px-4 py-3 border border-surface-border rounded-lg bg-white text-text-dark placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors"
-                placeholder="Required 6 characters min"
-                minLength={6}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center py-3 px-4 rounded-lg text-white bg-brand-primary hover:bg-brand-primary-hover font-bold transition-colors disabled:opacity-70"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="animate-spin" size={20} /> Signing up...
-                </span>
-              ) : (
-                "Sign Up"
-              )}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-text-dark">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="text-brand-primary font-bold hover:underline transition-all"
-            >
-              Login
-            </Link>
+          <h2 className="text-white text-3xl xl:text-4xl font-bold leading-tight mb-4 animate-fade-in-up">
+            Start Your Journey
+          </h2>
+          <p className="text-white/70 text-base leading-relaxed mb-8 animate-fade-in-up delay-200">
+            Create an account to explore thousands of job opportunities and
+            connect with top companies.
           </p>
 
-          <div className="my-8 flex items-center">
-            <div className="flex-grow border-t border-surface-border"></div>
-            <span className="mx-4 text-sm text-text-muted">
-              Or Sign Up with
-            </span>
-            <div className="flex-grow border-t border-surface-border"></div>
+          <div className="space-y-4 animate-fade-in-up delay-400">
+            {[
+              { icon: "✓", text: "Access 5000+ job listings" },
+              { icon: "✓", text: "Get personalized recommendations" },
+              { icon: "✓", text: "One-click job applications" },
+            ].map((item, idx) => (
+              <div
+                key={item.text}
+                className={`flex items-center gap-3 animate-fade-in-up delay-[${400 + idx * 100}ms]`}
+              >
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">
+                  {item.icon}
+                </div>
+                <span className="text-white/80 text-sm hover:text-white transition-colors">
+                  {item.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right — Signup Form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-12 bg-surface-light">
+        <div className="w-full max-w-[440px]">
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-8 text-center flex justify-center">
+            <Link
+              href="/"
+              className="inline-block hover:scale-105 transition-transform"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="16" fill="white" />
+                  </svg>
+                </div>
+                <span className="text-brand-primary text-2xl font-bold">
+                  QuickHire
+                </span>
+              </div>
+            </Link>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-surface-border rounded-lg hover:bg-surface-muted transition-colors font-medium text-text-dark">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+          <div className="bg-white rounded-[var(--radius-lg)] p-8 sm:p-10 shadow-[var(--shadow-card)] animate-fade-in-up">
+            <div className="mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-dark mb-2">
+                Create Account
+              </h1>
+              <p className="text-text-muted text-sm">
+                Fill in your details to get started.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <div className="group">
+                <Input
+                  label="Full Name"
+                  placeholder="Enter your full name"
+                  type="text"
+                  id="signup-name"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  error={errors.fullName}
+                  required
+                  icon={
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="group-hover:text-brand-primary transition-colors"
+                    >
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  }
+                />
+              </div>
+
+              <div className="group">
+                <Input
+                  label="Email Address"
+                  placeholder="Enter your email"
+                  type="email"
+                  id="signup-email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  error={errors.email}
+                  required
+                  icon={
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="group-hover:text-brand-primary transition-colors"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7" />
+                    </svg>
+                  }
+                />
+              </div>
+
+              <div className="group">
+                <Input
+                  label="Password"
+                  placeholder="Create a password"
+                  type="password"
+                  id="signup-password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  required
+                  icon={
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="group-hover:text-brand-primary transition-colors"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                  }
+                />
+              </div>
+
+              <div className="group">
+                <Input
+                  label="Confirm Password"
+                  placeholder="Confirm your password"
+                  type="password"
+                  id="signup-confirm-password"
+                  name="confirmPassword"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  error={errors.confirmPassword}
+                  required
+                  icon={
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="group-hover:text-brand-primary transition-colors"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  }
+                />
+              </div>
+
+              <label className="flex items-start gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 mt-0.5 rounded border-surface-border text-brand-primary focus:ring-brand-primary/30 cursor-pointer accent-[var(--brand-primary)]"
+                  required
+                />
+                <span className="text-sm text-text-muted group-hover:text-text-body transition-colors leading-tight">
+                  I agree to the{" "}
+                  <Link
+                    href="#"
+                    className="text-brand-primary font-semibold hover:underline transition-colors"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="#"
+                    className="text-brand-primary font-semibold hover:underline transition-colors"
+                  >
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full mt-2 hover:scale-[1.02] transition-transform duration-200 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"
+                id="signup-submit"
+                disabled={loading}
               >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin" size={20} /> Creating
+                    Account...
+                  </span>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex-1 h-px bg-surface-border" />
+              <span className="text-text-muted text-xs uppercase tracking-wide">
+                or
+              </span>
+              <div className="flex-1 h-px bg-surface-border" />
+            </div>
+
+            <button className="mt-4 w-full flex items-center justify-center gap-3 px-4 py-3 rounded-[var(--radius-sm)] border border-surface-border text-text-body font-medium hover:bg-surface-light hover:border-gray-300 transition-all duration-[var(--transition-fast)] cursor-pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24">
                 <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                   fill="#4285F4"
                 />
                 <path
@@ -157,8 +358,18 @@ export default function Signup() {
                   fill="#EA4335"
                 />
               </svg>
-              Google
+              Continue with Google
             </button>
+
+            <p className="mt-6 text-center text-sm text-text-muted">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="text-brand-primary font-bold hover:text-brand-primary-hover transition-colors"
+              >
+                Login
+              </Link>
+            </p>
           </div>
         </div>
       </div>
