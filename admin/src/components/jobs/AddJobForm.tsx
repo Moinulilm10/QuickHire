@@ -18,15 +18,24 @@ export interface AddJobFormData {
 interface AddJobFormProps {
   onSubmit: (data: AddJobFormData) => void;
   onCancel: () => void;
+  initialData?: AddJobFormData;
 }
 
-export default function AddJobForm({ onSubmit, onCancel }: AddJobFormProps) {
-  const [title, setTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [location, setLocation] = useState("");
-  const [type, setType] = useState("");
-  const [description, setDescription] = useState("");
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+export default function AddJobForm({
+  onSubmit,
+  onCancel,
+  initialData,
+}: AddJobFormProps) {
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [company, setCompany] = useState(initialData?.company || "");
+  const [location, setLocation] = useState(initialData?.location || "");
+  const [type, setType] = useState(initialData?.type || "");
+  const [description, setDescription] = useState(
+    initialData?.description || "",
+  );
+  const [logoUrl, setLogoUrl] = useState<string | null>(
+    initialData?.logoUrl || null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -64,7 +73,9 @@ export default function AddJobForm({ onSubmit, onCancel }: AddJobFormProps) {
       <div className="relative w-full max-w-lg bg-surface rounded-2xl shadow-2xl border border-surface-border overflow-hidden animate-fade-in-up">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
-          <h2 className="text-lg font-bold text-foreground">Add New Job</h2>
+          <h2 className="text-lg font-bold text-foreground">
+            {initialData ? "Update Job" : "Add New Job"}
+          </h2>
           <button
             onClick={onCancel}
             className="text-text-muted hover:text-foreground transition-colors duration-200 cursor-pointer"
@@ -134,7 +145,9 @@ export default function AddJobForm({ onSubmit, onCancel }: AddJobFormProps) {
             <Button variant="outline" type="button" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit">Add Job</Button>
+            <Button type="submit">
+              {initialData ? "Update Job" : "Add Job"}
+            </Button>
           </div>
         </form>
       </div>
