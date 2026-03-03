@@ -9,6 +9,10 @@ export const authService = {
     return apiService.post("/auth/signup", userData);
   },
 
+  googleAuth: async (token: string, intent: "login" | "signup") => {
+    return apiService.post("/auth/google", { token, intent });
+  },
+
   getProfile: async () => {
     return apiService.get("/auth/profile", { requireAuth: true });
   },

@@ -20,12 +20,10 @@ exports.signup = async (req, res) => {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: "User already exists with this email",
-        });
+      return res.status(409).json({
+        success: false,
+        message: "User already exists with this email",
+      });
     }
 
     // Hash password
@@ -82,7 +80,31 @@ exports.login = async (req, res) => {
     if (!user) {
       return res
         .status(401)
-        .json({ success: false, message: "Invalid email or password" });
+        .json({
+          success: false,
+          message: "No account found with this email. Please sign up first.",
+        });
+    }
+
+    // Edge case: Google user trying to login with password
+    if (user.authProvider === "google") {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message:
+            "This account uses Google Sign-In. Please login with Google.",
+        });
+    }
+
+    // Guard against null password (safety net)
+    if (!user.password) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Invalid login method for this account.",
+        });
     }
 
     // Compare password
@@ -147,5 +169,92 @@ exports.getProfile = async (req, res) => {
   } catch (error) {
     console.error("Profile Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const { OAuth2Client } = require("google-auth-library");
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+exports.googleAuth = async (req, res) => {
+  try {
+    const { token, intent } = req.body;
+
+    if (!token || !intent) {
+      return res.status(400).json({
+        success: false,
+        message: "Google token and intent (login/signup) are required",
+      });
+    }
+
+    // Verify Google Token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    // Handle Edge Cases
+    if (intent === "signup") {
+      if (user) {
+        return res.status(409).json({
+          success: false,
+          message: "Account already exists. Please login instead.",
+        });
+      }
+
+      // Create user if signup and doesn't exist
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: name || email.split("@")[0],
+          authProvider: "google",
+        },
+      });
+    } else if (intent === "login") {
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "No account found. Please sign up first.",
+        });
+      }
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid intent specified.",
+      });
+    }
+
+    // Generate standard JWT mimicking local login/signup
+    const jwtToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN },
+    );
+
+    res.status(intent === "signup" ? 201 : 200).json({
+      success: true,
+      message:
+        intent === "signup"
+          ? "User registered successfully via Google"
+          : "Google Login successful",
+      token: jwtToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        authProvider: user.authProvider,
+      },
+    });
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to authenticate with Google." });
   }
 };
