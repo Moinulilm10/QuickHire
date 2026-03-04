@@ -12,7 +12,9 @@ export interface AddJobFormData {
   location: string;
   type: string;
   description: string;
-  logoUrl: string | null;
+  logo: string | null;
+  experience: string;
+  salary: string;
 }
 
 interface AddJobFormProps {
@@ -30,12 +32,12 @@ export default function AddJobForm({
   const [company, setCompany] = useState(initialData?.company || "");
   const [location, setLocation] = useState(initialData?.location || "");
   const [type, setType] = useState(initialData?.type || "");
+  const [experience, setExperience] = useState(initialData?.experience || "");
+  const [salary, setSalary] = useState(initialData?.salary || "");
   const [description, setDescription] = useState(
     initialData?.description || "",
   );
-  const [logoUrl, setLogoUrl] = useState<string | null>(
-    initialData?.logoUrl || null,
-  );
+  const [logo, setLogo] = useState<string | null>(initialData?.logo || null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -57,7 +59,9 @@ export default function AddJobForm({
       location: location.trim(),
       type: type.trim() || "Full Time",
       description: description.trim(),
-      logoUrl,
+      logo,
+      experience: experience.trim(),
+      salary: salary.trim(),
     });
   };
 
@@ -89,7 +93,7 @@ export default function AddJobForm({
           onSubmit={handleSubmit}
           className="p-6 space-y-4 max-h-[70vh] overflow-y-auto"
         >
-          <LogoUpload value={logoUrl} onChange={setLogoUrl} />
+          <LogoUpload value={logo} onChange={setLogo} />
 
           <Input
             label="Job Title"
@@ -107,20 +111,38 @@ export default function AddJobForm({
             error={errors.company}
           />
 
-          <Input
-            label="Location"
-            placeholder="e.g. New York, US"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            error={errors.location}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Location"
+              placeholder="e.g. New York, US"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              error={errors.location}
+            />
 
-          <Input
-            label="Type"
-            placeholder="e.g. Full Time"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          />
+            <Input
+              label="Type"
+              placeholder="e.g. Full Time"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Experience Level"
+              placeholder="e.g. 3-5 Years"
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+            />
+
+            <Input
+              label="Salary Range"
+              placeholder="e.g. $80k - $120k"
+              value={salary}
+              onChange={(e) => setSalary(e.target.value)}
+            />
+          </div>
 
           <div className="w-full">
             <label className="block text-sm font-semibold text-foreground mb-1.5">

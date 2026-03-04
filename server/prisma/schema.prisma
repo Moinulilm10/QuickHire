@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider   = "prisma-client-js"
   engineType = "library"
@@ -15,11 +13,11 @@ model User {
   email        String           @unique
   password     String?
   name         String?
-  role         String           @default("USER") // USER, ADMIN, ORGANIZATION
-  authProvider String           @default("local") // "local" or "google"
-  applications JobApplication[]
+  role         String           @default("USER")
+  authProvider String           @default("local")
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  applications JobApplication[]
 }
 
 model Company {
@@ -27,11 +25,11 @@ model Company {
   uuid         String           @unique @default(uuid())
   name         String
   location     String
-  logo         String? // Replaces logoUrl from Job
-  jobs         Job[]
-  applications JobApplication[]
+  logo         String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  jobs         Job[]
+  applications JobApplication[]
 }
 
 model Job {
@@ -40,17 +38,17 @@ model Job {
   title        String
   companyId    Int
   location     String
-  type         String // Full-Time, Part-Time, etc.
+  type         String
   description  String?
-  logo         String?
-  experience   String?
   logoColor    String?
   salary       String?
   categories   String[]
-  applications JobApplication[]
-  company      Company          @relation(fields: [companyId], references: [id])
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  experience   String?
+  logo         String?
+  company      Company          @relation(fields: [companyId], references: [id])
+  applications JobApplication[]
 }
 
 model JobApplication {
@@ -59,14 +57,14 @@ model JobApplication {
   userId      Int
   jobId       String
   companyId   Int
-  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
-  resume      String? // Replaces resumeUrl
+  status      String   @default("PENDING")
+  resume      String?
   coverLetter String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
-  job         Job      @relation(fields: [jobId], references: [id])
   company     Company  @relation(fields: [companyId], references: [id])
+  job         Job      @relation(fields: [jobId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
 
-  @@unique([userId, jobId]) // Prevent duplicate applications
+  @@unique([userId, jobId])
 }

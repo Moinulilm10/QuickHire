@@ -2,10 +2,20 @@ const jobModel = require("../models/job.model");
 
 exports.getAllJobs = async (req, res, next) => {
   try {
-    const jobs = await jobModel.getAllJobs();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const { jobs, total } = await jobModel.getAllJobs(page, limit);
+
     res.status(200).json({
       success: true,
-      data: jobs,
+      jobs,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     next(error);

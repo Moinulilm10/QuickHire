@@ -4,7 +4,7 @@ import AddJobForm, { AddJobFormData } from "@/components/jobs/AddJobForm";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
-import { Job, mockJobs } from "@/data/mockJobs";
+import Pagination from "@/components/ui/Pagination";
 import { alertService } from "@/utils/alertService";
 import {
   ArrowLeft,
@@ -15,7 +15,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const statusColors: Record<string, string> = {
   active: "bg-success/10 text-success",
@@ -24,67 +24,123 @@ const statusColors: Record<string, string> = {
 };
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<Job[]>(mockJobs);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
   const [search, setSearch] = useState("");
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const filteredJobs = jobs.filter(
-    (j) =>
-      j.title.toLowerCase().includes(search.toLowerCase()) ||
-      j.company.toLowerCase().includes(search.toLowerCase()),
-  );
+  const fetchJobs = async (page: number) => {
+    setLoading(true);
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${apiUrl}/jobs?page=${page}&limit=8`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-  const handleDelete = async (job: Job) => {
-    const confirmed = await alertService.confirmDelete(
-      `${job.title} at ${job.company}`,
-    );
-    if (confirmed) {
-      setJobs((prev) => prev.filter((j) => j.id !== job.id));
-      if (selectedJob?.id === job.id) setSelectedJob(null);
-      alertService.success("Deleted!", "Job listing has been removed.");
+      const data = await res.json();
+      if (data.success) {
+        setJobs(data.jobs);
+        setTotalPages(data.pagination.totalPages);
+        setTotalJobs(data.pagination.total);
+        setCurrentPage(page);
+      } else {
+        alertService.error("Error", data.message || "Could not fetch jobs");
+      }
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error);
+      alertService.error("Error", "An error occurred while fetching jobs.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSaveJob = (data: AddJobFormData) => {
-    if (selectedJob) {
-      // Update existing job
-      const updatedJobs = jobs.map((job) =>
-        job.id === selectedJob.id
-          ? {
-              ...job,
-              ...data,
-              logoUrl: data.logoUrl ?? job.logoUrl,
-            }
-          : job,
-      );
-      setJobs(updatedJobs);
-      // Update selectedJob to reflect changes in detail view
-      setSelectedJob({
-        ...selectedJob,
-        ...data,
-        logoUrl: data.logoUrl ?? selectedJob.logoUrl,
-      });
-      alertService.success("Updated!", "Job listing has been updated.");
-    } else {
-      // Add new job
-      const newJob: Job = {
-        id: Date.now().toString(),
-        title: data.title,
-        company: data.company,
-        location: data.location,
-        type: data.type,
-        categories: ["General"],
-        description: data.description,
-        logoColor: "#4640DE",
-        logoUrl: data.logoUrl ?? undefined,
-        createdAt: new Date().toISOString().split("T")[0],
-        status: "active",
-      };
-      setJobs((prev) => [newJob, ...prev]);
-      alertService.success("Success!", "New job listing has been added.");
+  useEffect(() => {
+    fetchJobs(1);
+  }, []);
+
+  const handleDelete = async (job: any) => {
+    const confirmed = await alertService.confirm(
+      "Are you sure?",
+      `Confirm deleting ${job.title} at ${job.company?.name || "the company"}.`,
+      "Delete",
+      true,
+    );
+
+    if (confirmed.isConfirmed) {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch(`${apiUrl}/jobs/${job.id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alertService.success("Deleted!", "Job listing has been removed.");
+          fetchJobs(currentPage);
+          if (selectedJob?.id === job.id) setSelectedJob(null);
+        } else {
+          alertService.error("Error", data.message || "Failed to delete job");
+        }
+      } catch (err) {
+        alertService.error("Error", "Connection error");
+      }
     }
-    setShowAddForm(false);
+  };
+
+  const handleSaveJob = async (data: AddJobFormData) => {
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
+      const token = localStorage.getItem("adminToken");
+
+      const payload = {
+        ...data,
+      };
+
+      const url = selectedJob
+        ? `${apiUrl}/jobs/${selectedJob.id}`
+        : `${apiUrl}/jobs`;
+      const method = selectedJob ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const resData = await res.json();
+      if (resData.success) {
+        alertService.success(
+          selectedJob ? "Updated!" : "Success!",
+          selectedJob
+            ? "Job listing has been updated."
+            : "New job listing has been added.",
+        );
+        fetchJobs(currentPage);
+        setShowAddForm(false);
+        if (selectedJob) setSelectedJob(resData.data);
+      } else {
+        alertService.error("Error", resData.message || "Failed to save job");
+      }
+    } catch (err) {
+      alertService.error("Error", "Connection error");
+    }
   };
 
   return (
@@ -104,19 +160,19 @@ export default function JobsPage() {
               <div
                 className={`w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden`}
                 style={{
-                  backgroundColor: selectedJob.logoUrl
+                  backgroundColor: selectedJob.logo
                     ? "transparent"
                     : selectedJob.logoColor,
                 }}
               >
-                {selectedJob.logoUrl ? (
+                {selectedJob.logo ? (
                   <img
-                    src={selectedJob.logoUrl}
+                    src={selectedJob.logo}
                     className="w-full h-full object-cover"
-                    alt={selectedJob.company}
+                    alt={selectedJob.company?.name || "Company"}
                   />
                 ) : (
-                  selectedJob.company.charAt(0)
+                  (selectedJob.company?.name || "C").charAt(0)
                 )}
               </div>
               <div>
@@ -124,7 +180,8 @@ export default function JobsPage() {
                   {selectedJob.title}
                 </h2>
                 <p className="text-text-muted text-sm">
-                  {selectedJob.company} • {selectedJob.location}
+                  {selectedJob.company?.name || "Company"} •{" "}
+                  {selectedJob.location}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
@@ -138,6 +195,11 @@ export default function JobsPage() {
                   {selectedJob.salary && (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-accent/10 text-accent">
                       {selectedJob.salary}
+                    </span>
+                  )}
+                  {selectedJob.experience && (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                      Exp: {selectedJob.experience}
                     </span>
                   )}
                 </div>
@@ -158,7 +220,7 @@ export default function JobsPage() {
                 Categories
               </h3>
               <div className="flex flex-wrap gap-2">
-                {selectedJob.categories.map((cat) => (
+                {selectedJob.categories.map((cat: string) => (
                   <span
                     key={cat}
                     className="px-3 py-1 rounded-full text-xs font-semibold bg-surface-border text-foreground"
@@ -226,7 +288,7 @@ export default function JobsPage() {
           {/* Search */}
           <div className="max-w-md animate-fade-in-up">
             <Input
-              placeholder="Search by title or company..."
+              placeholder="Search by title..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               icon={<Search size={16} />}
@@ -235,73 +297,87 @@ export default function JobsPage() {
 
           {/* Job Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filteredJobs.map((job) => (
-              <Card
-                key={job.id}
-                hover
-                onClick={() => setSelectedJob(job)}
-                className="animate-fade-in-up group"
-              >
-                <div className="flex items-start justify-between mb-3">
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0 overflow-hidden`}
-                    style={{
-                      backgroundColor: job.logoUrl
-                        ? "transparent"
-                        : job.logoColor,
-                    }}
+                    key={i}
+                    className="bg-surface rounded-2xl p-6 border border-surface-border animate-pulse h-48"
+                  />
+                ))
+              : jobs.map((job) => (
+                  <Card
+                    key={job.id}
+                    hover
+                    onClick={() => setSelectedJob(job)}
+                    className="animate-fade-in-up group"
                   >
-                    {job.logoUrl ? (
-                      <img
-                        src={job.logoUrl}
-                        className="w-full h-full object-cover"
-                        alt={job.company}
-                      />
-                    ) : (
-                      job.company.charAt(0)
-                    )}
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusColors[job.status]}`}
-                  >
-                    {job.status}
-                  </span>
-                </div>
+                    <div className="flex items-start justify-between mb-3">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0 overflow-hidden`}
+                        style={{
+                          backgroundColor: job.logoUrl
+                            ? "transparent"
+                            : job.logoColor,
+                        }}
+                      >
+                        {job.logo ? (
+                          <img
+                            src={job.logo}
+                            className="w-full h-full object-cover"
+                            alt={job.company?.name || "Company"}
+                          />
+                        ) : (
+                          (job.company?.name || "C").charAt(0)
+                        )}
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusColors[job.status] || "bg-surface-border text-foreground"}`}
+                      >
+                        {job.status}
+                      </span>
+                    </div>
 
-                <h3 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200">
-                  {job.title}
-                </h3>
-                <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
-                  <Briefcase size={12} /> {job.company}
-                </p>
-                <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
-                  <MapPin size={12} /> {job.location}
-                </p>
+                    <h3 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200">
+                      {job.title}
+                    </h3>
+                    <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
+                      <Briefcase size={12} /> {job.company?.name || "Company"}
+                    </p>
+                    <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
+                      <MapPin size={12} /> {job.location}
+                    </p>
 
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-surface-border">
-                  <span className="text-[10px] text-text-muted">
-                    {job.createdAt}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(job);
-                    }}
-                    className="text-text-muted hover:text-danger transition-all duration-200 cursor-pointer transform hover:scale-110"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </Card>
-            ))}
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-surface-border">
+                      <span className="text-[10px] text-text-muted">
+                        {new Date(job.createdAt).toLocaleDateString()}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(job);
+                        }}
+                        className="text-text-muted hover:text-danger transition-all duration-200 cursor-pointer transform hover:scale-110"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </Card>
+                ))}
           </div>
 
-          {filteredJobs.length === 0 && (
+          {jobs.length === 0 && !loading && (
             <div className="text-center py-16 animate-fade-in">
               <p className="text-text-muted text-lg">No jobs found</p>
-              <p className="text-text-muted text-sm mt-1">
-                Try a different search term
-              </p>
+            </div>
+          )}
+
+          {!loading && totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => fetchJobs(page)}
+              />
             </div>
           )}
         </div>
@@ -316,11 +392,13 @@ export default function JobsPage() {
             selectedJob
               ? {
                   title: selectedJob.title,
-                  company: selectedJob.company,
+                  company: selectedJob.company?.name || "",
                   location: selectedJob.location,
                   type: selectedJob.type,
                   description: selectedJob.description,
-                  logoUrl: selectedJob.logoUrl || null,
+                  logo: selectedJob.logo || null,
+                  experience: selectedJob.experience || "",
+                  salary: selectedJob.salary || "",
                 }
               : undefined
           }
