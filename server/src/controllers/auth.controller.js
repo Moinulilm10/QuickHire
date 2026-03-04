@@ -78,33 +78,26 @@ exports.login = async (req, res) => {
     // Find user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "No account found with this email. Please sign up first.",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "No account found with this email. Please sign up first.",
+      });
     }
 
     // Edge case: Google user trying to login with password
     if (user.authProvider === "google") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message:
-            "This account uses Google Sign-In. Please login with Google.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "This account uses Google Sign-In. Please login with Google.",
+      });
     }
 
     // Guard against null password (safety net)
     if (!user.password) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Invalid login method for this account.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Invalid login method for this account.",
+      });
     }
 
     // Compare password
@@ -256,5 +249,48 @@ exports.googleAuth = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to authenticate with Google." });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+          authProvider: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      prisma.user.count(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error("Get All Users Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
