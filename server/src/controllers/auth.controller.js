@@ -275,9 +275,7 @@ exports.getAllUsers = async (req, res) => {
           createdAt: true,
           authProvider: true,
         },
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: [{ role: "asc" }, { createdAt: "desc" }],
       }),
       prisma.user.count(),
     ]);
