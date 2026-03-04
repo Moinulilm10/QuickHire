@@ -42,6 +42,8 @@ model Job {
   location     String
   type         String // Full-Time, Part-Time, etc.
   description  String?
+  logo         String?
+  experience   String?
   logoColor    String?
   salary       String?
   categories   String[]
