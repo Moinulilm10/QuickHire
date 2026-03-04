@@ -15,6 +15,7 @@ export interface AddJobFormData {
   logo: string | null;
   experience: string;
   salary: string;
+  categories: string[];
 }
 
 interface AddJobFormProps {
@@ -34,6 +35,9 @@ export default function AddJobForm({
   const [type, setType] = useState(initialData?.type || "");
   const [experience, setExperience] = useState(initialData?.experience || "");
   const [salary, setSalary] = useState(initialData?.salary || "");
+  const [categoriesInput, setCategoriesInput] = useState(
+    initialData?.categories?.join(", ") || "",
+  );
   const [description, setDescription] = useState(
     initialData?.description || "",
   );
@@ -62,6 +66,10 @@ export default function AddJobForm({
       logo,
       experience: experience.trim(),
       salary: salary.trim(),
+      categories: categoriesInput
+        .split(",")
+        .map((cat) => cat.trim())
+        .filter((cat) => cat !== ""),
     });
   };
 
@@ -143,6 +151,13 @@ export default function AddJobForm({
               onChange={(e) => setSalary(e.target.value)}
             />
           </div>
+
+          <Input
+            label="Categories"
+            placeholder="e.g. IT, Software, Development (comma separated)"
+            value={categoriesInput}
+            onChange={(e) => setCategoriesInput(e.target.value)}
+          />
 
           <div className="w-full">
             <label className="block text-sm font-semibold text-foreground mb-1.5">

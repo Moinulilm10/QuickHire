@@ -399,6 +399,7 @@ export default function JobsPage() {
                   logo: selectedJob.logo || null,
                   experience: selectedJob.experience || "",
                   salary: selectedJob.salary || "",
+                  categories: selectedJob.categories || [],
                 }
               : undefined
           }
