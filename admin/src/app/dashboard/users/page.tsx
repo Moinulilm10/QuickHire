@@ -2,7 +2,7 @@
 
 import Pagination from "@/components/ui/Pagination";
 import { alertService } from "@/utils/alertService";
-import { Loader2, Mail, Shield, User as UserIcon } from "lucide-react";
+import { Loader2, Mail, Shield, Trash2, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface UserData {
@@ -62,6 +62,42 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    const isConfirmed = await alertService.confirm(
+      "Are you sure?",
+      `Do you really want to delete user ${userName}? This action cannot be undone.`,
+      "Delete",
+      true,
+    );
+
+    if (isConfirmed.isConfirmed) {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+        const token = localStorage.getItem("adminToken");
+
+        const res = await fetch(`${apiUrl}/auth/users/${userId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          alertService.success("Deleted!", "User has been deleted.");
+          fetchUsers(currentPage);
+        } else {
+          alertService.error("Error", data.message || "Failed to delete user");
+        }
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+        alertService.error("Error", "An error occurred while deleting user.");
+      }
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface p-6 rounded-2xl border border-surface-border shadow-sm">
@@ -96,6 +132,7 @@ export default function UsersPage() {
                   <th className="px-6 py-4 font-bold">Email</th>
                   <th className="px-6 py-4 font-bold">Role</th>
                   <th className="px-6 py-4 font-bold">Joined</th>
+                  <th className="px-6 py-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
@@ -157,12 +194,26 @@ export default function UsersPage() {
                           day: "numeric",
                         })}
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        {user.role.toLowerCase() !== "admin" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteUser(user.id, user.name);
+                            }}
+                            className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="px-6 py-12 text-center text-text-muted"
                     >
                       <div className="flex flex-col items-center justify-center">

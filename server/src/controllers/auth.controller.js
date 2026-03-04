@@ -297,3 +297,65 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user.userId;
+
+    // Verify requester is an admin
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Only admins can delete users",
+      });
+    }
+
+    // Find the user to be deleted
+    const userToDelete = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!userToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent deleting other admins
+    if (userToDelete.role === "ADMIN" && userToDelete.id !== adminId) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot delete other admin accounts",
+      });
+    }
+
+    // Prevent self-deletion if preferred (optional, but safer for now)
+    if (userToDelete.id === adminId) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You cannot delete your own account from here",
+      });
+    }
+
+    // Delete user (Prisma will handle cascading if configured, or block if foreign keys exist)
+    // In this schema, JobApplication has a relation to User.
+    // If we want to allow deletion, we might need to delete applications first if not on CASCADE.
+    await prisma.jobApplication.deleteMany({
+      where: { userId: userToDelete.id },
+    });
+
+    await prisma.user.delete({
+      where: { id: userToDelete.id },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete User Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

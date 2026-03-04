@@ -11,5 +11,6 @@ router.post("/google", authController.googleAuth);
 // Protected routes
 router.get("/profile", authMiddleware, authController.getProfile);
 router.get("/users", authMiddleware, authController.getAllUsers);
+router.delete("/users/:id", authMiddleware, authController.deleteUser);
 
 module.exports = router;

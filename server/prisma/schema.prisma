@@ -42,6 +42,7 @@ model Job {
   description  String?
   logoColor    String?
   salary       String?
+  status       String           @default("active")
   categories   String[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
