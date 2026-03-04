@@ -1,6 +1,13 @@
 "use client";
 
-import { Briefcase, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import {
+  Briefcase,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Users,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -8,6 +15,7 @@ import { useState } from "react";
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
+  { label: "Users", href: "/dashboard/users", icon: Users },
 ];
 
 export default function DashboardLayout({
