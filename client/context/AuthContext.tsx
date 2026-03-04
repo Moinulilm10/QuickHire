@@ -1,9 +1,9 @@
 "use client";
 
+import { alertService } from "@/utils/alertService";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
-import Swal from "sweetalert2";
 
 export interface User {
   id: number | string;
@@ -85,15 +85,10 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
       await signOut({ redirect: false });
     }
 
-    Swal.fire({
-      icon: "success",
-      title: "Logged Out",
-      text: "You have been logged out successfully.",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-    });
+    alertService.success(
+      "Logged Out",
+      "You have been logged out successfully.",
+    );
     router.push("/login");
   };
 

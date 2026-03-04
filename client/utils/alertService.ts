@@ -70,4 +70,25 @@ export const alertService = {
       },
     });
   },
+  confirm: (
+    title: string,
+    text: string,
+    confirmButtonText = "Yes",
+    icon: SweetAlertOptions["icon"] = "warning",
+  ) => {
+    return Swal.fire({
+      title,
+      text,
+      icon,
+      showCancelButton: true,
+      confirmButtonColor: icon === "warning" ? "#4640DE" : "#EF4444",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText,
+      customClass: {
+        popup: "rounded-2xl shadow-xl border border-surface-border",
+        confirmButton: "rounded-lg px-6 py-2 font-bold",
+        cancelButton: "rounded-lg px-6 py-2 font-bold",
+      },
+    });
+  },
 };

@@ -2,6 +2,7 @@
 
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import { useAuth, User } from "@/context/AuthContext";
+import { alertService } from "@/utils/alertService";
 import {
   Briefcase,
   Calendar,
@@ -15,7 +16,6 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
 
 export default function ProfilePage() {
   const { user, token, isLoaded, logout } = useAuth();
@@ -60,12 +60,10 @@ export default function ProfilePage() {
   useEffect(() => {
     if (isLoaded) {
       if (!user || !token) {
-        Swal.fire({
-          icon: "warning",
-          title: "Access Denied",
-          text: "Please login to view your profile.",
-          confirmButtonColor: "#4640DE",
-        });
+        alertService.warning(
+          "Access Denied",
+          "Please login to view your profile.",
+        );
         router.push("/login");
         return;
       }
@@ -92,11 +90,10 @@ export default function ProfilePage() {
         if (res.status === 401) {
           logout();
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: data.message || "Could not fetch profile",
-          });
+          alertService.error(
+            "Error",
+            data.message || "Could not fetch profile",
+          );
         }
       }
     } catch (error) {
@@ -107,27 +104,23 @@ export default function ProfilePage() {
   };
 
   const handleDeleteAccount = () => {
-    Swal.fire({
-      title: "Are you absolutely sure?",
-      text: "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#EF4444",
-      cancelButtonColor: "#6B7280",
-      confirmButtonText: "Yes, delete my account!",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Implement real delete account API call here in the future
-        Swal.fire({
-          title: "Deleted!",
-          text: "Your account has been deleted.",
-          icon: "success",
-          confirmButtonColor: "#4640DE",
-        }).then(() => {
-          logout();
-        });
-      }
-    });
+    alertService
+      .confirm(
+        "Are you absolutely sure?",
+        "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+        "Yes, delete my account!",
+        "danger",
+      )
+      .then((result) => {
+        if (result.isConfirmed) {
+          // Implement real delete account API call here in the future
+          alertService
+            .success("Deleted!", "Your account has been deleted.")
+            .then(() => {
+              logout();
+            });
+        }
+      });
   };
 
   if (!isLoaded || loading) {
