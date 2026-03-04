@@ -35,7 +35,7 @@ exports.signup = async (req, res) => {
       data: {
         email,
         password: hashedPassword,
-        name: name || email.split("@")[0], // Default name if not provided
+        name: name || email.split("@")[0],
       },
     });
 
