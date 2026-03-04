@@ -220,14 +220,17 @@ export default function JobsPage() {
                 Categories
               </h3>
               <div className="flex flex-wrap gap-2">
-                {selectedJob.categories.map((cat: string) => (
-                  <span
-                    key={cat}
-                    className="px-3 py-1 rounded-full text-xs font-semibold bg-surface-border text-foreground"
-                  >
-                    {cat}
-                  </span>
-                ))}
+                {(selectedJob.categories || []).map((cat: any) => {
+                  const name = typeof cat === "string" ? cat : cat.name;
+                  return (
+                    <span
+                      key={typeof cat === "string" ? cat : cat.id}
+                      className="px-3 py-1 rounded-full text-xs font-semibold bg-surface-border text-foreground"
+                    >
+                      {name}
+                    </span>
+                  );
+                })}
               </div>
             </div>
 
@@ -399,7 +402,9 @@ export default function JobsPage() {
                   logo: selectedJob.logo || null,
                   experience: selectedJob.experience || "",
                   salary: selectedJob.salary || "",
-                  categories: selectedJob.categories || [],
+                  categories: (selectedJob.categories || []).map((cat: any) =>
+                    typeof cat === "string" ? cat : cat.name,
+                  ),
                 }
               : undefined
           }

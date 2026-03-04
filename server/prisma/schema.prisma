@@ -43,13 +43,22 @@ model Job {
   logoColor    String?
   salary       String?
   status       String           @default("active")
-  categories   String[]
+  categories   Category[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   experience   String?
   logo         String?
   company      Company          @relation(fields: [companyId], references: [id])
   applications JobApplication[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  name      String   @unique
+  jobs      Job[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model JobApplication {

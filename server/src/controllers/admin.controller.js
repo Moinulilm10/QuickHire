@@ -11,24 +11,30 @@ exports.getDashboardStats = async (req, res) => {
     ]);
 
     // 2. Jobs by Category
-    // Since categories is String[], we fetch all jobs and aggregate in JS
-    const jobs = await prisma.job.findMany({
-      select: { categories: true, createdAt: true },
+    const categoriesWithCount = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { jobs: true },
+        },
+      },
+      orderBy: {
+        jobs: {
+          _count: "desc",
+        },
+      },
+      take: 8,
     });
 
-    const categoryCounts = {};
-    jobs.forEach((job) => {
-      job.categories.forEach((cat) => {
-        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-      });
-    });
-
-    const jobsByCategory = Object.keys(categoryCounts).map((name) => ({
-      name,
-      count: categoryCounts[name],
+    const jobsByCategory = categoriesWithCount.map((cat) => ({
+      name: cat.name,
+      count: cat._count.jobs,
     }));
 
     // 3. Jobs over time (histogram for last 6 months)
+    const jobs = await prisma.job.findMany({
+      select: { createdAt: true },
+    });
+
     const monthNames = [
       "Jan",
       "Feb",

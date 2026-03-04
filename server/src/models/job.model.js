@@ -7,7 +7,7 @@ class JobModel {
       prisma.job.findMany({
         skip,
         take: limit,
-        include: { company: true },
+        include: { company: true, categories: true },
         orderBy: { createdAt: "desc" },
       }),
       prisma.job.count(),
@@ -18,11 +18,12 @@ class JobModel {
   async getJobById(id) {
     return await prisma.job.findUnique({
       where: { id },
+      include: { company: true, categories: true },
     });
   }
 
   async createJob(jobData) {
-    const { company, ...sanitiziedData } = jobData;
+    const { company, categories, ...sanitiziedData } = jobData;
 
     // If companyId is not provided but company name is, find or create the company
     if (!sanitiziedData.companyId && company) {
@@ -44,19 +45,44 @@ class JobModel {
     if (sanitiziedData.companyId) {
       sanitiziedData.companyId = parseInt(sanitiziedData.companyId);
     }
+
+    // Handle many-to-many categories
+    if (categories && Array.isArray(categories)) {
+      sanitiziedData.categories = {
+        connectOrCreate: categories.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      };
+    }
+
     return await prisma.job.create({
       data: sanitiziedData,
+      include: { categories: true },
     });
   }
 
   async updateJob(id, jobData) {
-    const { company, ...sanitiziedData } = jobData;
+    const { company, categories, ...sanitiziedData } = jobData;
     if (sanitiziedData.companyId) {
       sanitiziedData.companyId = parseInt(sanitiziedData.companyId);
     }
+
+    // Handle many-to-many categories
+    if (categories && Array.isArray(categories)) {
+      sanitiziedData.categories = {
+        set: [], // Clear existing relations
+        connectOrCreate: categories.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      };
+    }
+
     return await prisma.job.update({
       where: { id },
       data: sanitiziedData,
+      include: { categories: true },
     });
   }
 
