@@ -31,24 +31,17 @@ export default function LatestJobs() {
   return (
     <section
       ref={sectionRef}
-      className="relative px-4 sm:px-6 lg:px-8 py-16 lg:py-24 bg-white overflow-hidden"
+      className="relative px-4 sm:px-6 lg:px-8 py-16 lg:py-24 overflow-hidden"
+      style={{
+        backgroundColor: "#3a35c4",
+        backgroundImage: "url('/assets/lattest-job-pattern.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
-      {/* Background patterns */}
-      <div className="absolute top-0 right-0 w-1/3 h-full pointer-events-none opacity-[0.03]">
-        <svg
-          width="400"
-          height="800"
-          viewBox="0 0 400 800"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M400 0L0 400M400 400L0 800"
-            stroke="var(--brand-primary)"
-            strokeWidth="1"
-          />
-        </svg>
-      </div>
+      {/* Semi-transparent overlay to ensure readability */}
+      <div className="absolute inset-0 bg-white/90 pointer-events-none"></div>
 
       <div className="max-w-[1280px] mx-auto relative z-10">
         {/* Header */}
@@ -62,7 +55,7 @@ export default function LatestJobs() {
           </h2>
           <Link
             href="/jobs"
-            className="group inline-flex items-center gap-2 text-brand-primary font-bold text-base hover:gap-3 transition-all duration-300"
+            className="group inline-flex items-center gap-2 text-brand-primary font-bold text-base hover:gap-3 transition-all duration-300 cursor-pointer"
           >
             Show all jobs
             <ArrowRight

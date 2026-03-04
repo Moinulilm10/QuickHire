@@ -54,6 +54,7 @@ exports.signup = async (req, res) => {
       token,
       user: {
         id: user.id,
+        uuid: user.uuid,
         email: user.email,
         name: user.name,
         role: user.role,
@@ -123,6 +124,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user.id,
+        uuid: user.uuid,
         email: user.email,
         name: user.name,
         role: user.role,
@@ -142,6 +144,7 @@ exports.getProfile = async (req, res) => {
       where: { id: userId },
       select: {
         id: true,
+        uuid: true,
         email: true,
         name: true,
         role: true,
@@ -238,6 +241,7 @@ exports.googleAuth = async (req, res) => {
       token: jwtToken,
       user: {
         id: user.id,
+        uuid: user.uuid,
         email: user.email,
         name: user.name,
         role: user.role,
@@ -264,6 +268,7 @@ exports.getAllUsers = async (req, res) => {
         take: limit,
         select: {
           id: true,
+          uuid: true,
           email: true,
           name: true,
           role: true,

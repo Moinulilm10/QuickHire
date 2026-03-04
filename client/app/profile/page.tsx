@@ -1,14 +1,13 @@
 "use client";
 
+import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import { useAuth, User } from "@/context/AuthContext";
 import {
   Briefcase,
   Calendar,
-  ChevronRight,
   ExternalLink,
   Loader2,
   Mail,
-  Settings as SettingsIcon,
   Shield,
   Trash2,
   User as UserIcon,
@@ -131,12 +130,6 @@ export default function ProfilePage() {
     });
   };
 
-  const navItems = [
-    { id: "overview", label: "Overview", icon: UserIcon },
-    { id: "applied", label: "Applied", icon: Briefcase },
-    { id: "settings", label: "Settings", icon: SettingsIcon },
-  ] as const;
-
   if (!isLoaded || loading) {
     return (
       <main className="min-h-screen pt-32 pb-12 flex items-center justify-center bg-surface-muted">
@@ -168,42 +161,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
-          <aside className="w-full md:w-72 shrink-0">
-            <div className="bg-white rounded-2xl shadow-sm border border-surface-border p-4 sticky top-28">
-              <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                {navItems.map((item) => {
-                  const isActive = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`
-                        flex items-center gap-3 px-4 py-3 rounded-xl text-sm md:text-base font-medium transition-all duration-200 whitespace-nowrap cursor-pointer
-                        ${
-                          isActive
-                            ? "bg-brand-primary text-white shadow-md shadow-brand-primary/20 scale-[1.02]"
-                            : "text-text-muted hover:bg-surface-muted hover:text-brand-primary"
-                        }
-                      `}
-                    >
-                      <item.icon
-                        size={20}
-                        className={isActive ? "text-white" : ""}
-                      />
-                      {item.label}
-                      {isActive && (
-                        <ChevronRight
-                          size={18}
-                          className="ml-auto hidden md:block opacity-70"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-          </aside>
+          <ProfileSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
           {/* Main Content Area */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-surface-border p-6 md:p-8 min-h-[500px]">

@@ -23,16 +23,29 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    // Mock login
-    setTimeout(() => {
-      if (email === "admin@quickhire.com" && password === "admin123") {
-        localStorage.setItem("adminToken", "mock-jwt-token");
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
+      const res = await fetch(`${apiUrl}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.token) {
+        localStorage.setItem("adminToken", data.token);
         router.push("/dashboard");
       } else {
-        setError("Invalid credentials");
+        setError(data.message || "Invalid credentials");
       }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -81,7 +94,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-xs text-text-muted mt-6">
-            Demo: admin@quickhire.com / admin123
+            Sign in with your registered account credentials.
           </p>
         </div>
       </div>
