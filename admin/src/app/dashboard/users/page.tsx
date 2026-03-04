@@ -1,9 +1,9 @@
 "use client";
 
 import Pagination from "@/components/ui/Pagination";
+import { alertService } from "@/utils/alertService";
 import { Loader2, Mail, Shield, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
 
 interface UserData {
   id: string;
@@ -42,19 +42,11 @@ export default function UsersPage() {
         setTotalUsers(data.pagination.total);
         setCurrentPage(page);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: data.message || "Could not fetch users",
-        });
+        alertService.error("Error", data.message || "Could not fetch users");
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "An error occurred while fetching users.",
-      });
+      alertService.error("Error", "An error occurred while fetching users.");
     } finally {
       setLoading(false);
     }

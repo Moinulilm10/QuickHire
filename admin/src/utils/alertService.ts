@@ -1,54 +1,96 @@
-import Swal, { SweetAlertResult } from "sweetalert2";
-
-// Reusable SweetAlert service — use throughout the app to avoid duplication
+import Swal, { SweetAlertOptions } from "sweetalert2";
 
 export const alertService = {
-  /** Success toast — auto-closes */
-  success(title: string, text?: string) {
+  success: (title: string, text?: string) => {
     return Swal.fire({
-      title,
-      text,
       icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-    });
-  },
-
-  /** Error alert */
-  error(title: string, text?: string) {
-    return Swal.fire({
       title,
       text,
-      icon: "error",
-      confirmButtonColor: "#4640DE",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      customClass: {
+        popup: "rounded-xl shadow-lg border border-surface-border",
+        title: "text-foreground font-bold text-sm",
+      },
     });
   },
 
-  /** Confirmation dialog — returns true if confirmed */
-  async confirm(
+  error: (title: string, text?: string) => {
+    return Swal.fire({
+      icon: "error",
+      title,
+      text,
+      confirmButtonColor: "#4640DE",
+      customClass: {
+        popup: "rounded-2xl shadow-xl border border-surface-border",
+        confirmButton: "rounded-lg px-6 py-2 font-bold",
+      },
+    });
+  },
+
+  warning: (title: string, text?: string) => {
+    return Swal.fire({
+      icon: "warning",
+      title,
+      text,
+      confirmButtonColor: "#4640DE",
+      customClass: {
+        popup: "rounded-2xl shadow-xl border border-surface-border",
+        confirmButton: "rounded-lg px-6 py-2 font-bold",
+      },
+    });
+  },
+
+  info: (title: string, text?: string) => {
+    return Swal.fire({
+      icon: "info",
+      title,
+      text,
+      confirmButtonColor: "#4640DE",
+      customClass: {
+        popup: "rounded-2xl shadow-xl border border-surface-border",
+        confirmButton: "rounded-lg px-6 py-2 font-bold",
+      },
+    });
+  },
+
+  confirm: (
     title: string,
     text: string,
-    confirmText = "Yes, do it!",
-  ): Promise<boolean> {
-    const result: SweetAlertResult = await Swal.fire({
+    confirmButtonText = "Yes",
+    isDanger = false,
+    icon: SweetAlertOptions["icon"] = "warning",
+  ) => {
+    return Swal.fire({
       title,
       text,
-      icon: "warning",
+      icon,
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: confirmText,
-      cancelButtonText: "Cancel",
+      confirmButtonColor: isDanger ? "#EF4444" : "#4640DE",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText,
+      customClass: {
+        popup: "rounded-2xl shadow-xl border border-surface-border",
+        confirmButton: "rounded-lg px-6 py-2 font-bold",
+        cancelButton: "rounded-lg px-6 py-2 font-bold",
+      },
     });
-    return result.isConfirmed;
   },
 
-  /** Delete confirmation — shorthand for common delete pattern */
-  async confirmDelete(itemName: string): Promise<boolean> {
-    return this.confirm(
-      "Delete Job?",
-      `Are you sure you want to delete "${itemName}"?`,
-      "Yes, delete it!",
-    );
+  custom: (options: SweetAlertOptions) => {
+    return Swal.fire({
+      ...options,
+      confirmButtonColor: options.confirmButtonColor || "#4640DE",
+      customClass: {
+        popup:
+          "rounded-2xl shadow-xl border border-surface-border animate-fade-in-up",
+        confirmButton: "rounded-lg px-6 py-2 font-bold",
+        cancelButton: "rounded-lg px-6 py-2 font-bold",
+        ...options.customClass,
+      },
+    });
   },
 };

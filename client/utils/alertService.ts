@@ -74,6 +74,7 @@ export const alertService = {
     title: string,
     text: string,
     confirmButtonText = "Yes",
+    isDanger = false,
     icon: SweetAlertOptions["icon"] = "warning",
   ) => {
     return Swal.fire({
@@ -81,7 +82,7 @@ export const alertService = {
       text,
       icon,
       showCancelButton: true,
-      confirmButtonColor: icon === "warning" ? "#4640DE" : "#EF4444",
+      confirmButtonColor: isDanger ? "#EF4444" : "#4640DE",
       cancelButtonColor: "#6B7280",
       confirmButtonText,
       customClass: {

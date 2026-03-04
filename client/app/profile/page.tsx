@@ -109,7 +109,7 @@ export default function ProfilePage() {
         "Are you absolutely sure?",
         "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
         "Yes, delete my account!",
-        "danger",
+        true,
       )
       .then((result) => {
         if (result.isConfirmed) {
