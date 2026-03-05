@@ -68,12 +68,12 @@ export default function ExploreByCategory() {
           </h2>
           <Link
             href="/categories"
-            className="group inline-flex items-center gap-2 text-brand-primary font-semibold text-sm sm:text-base hover:gap-3 transition-all duration-[var(--transition-base)]"
+            className="group inline-flex items-center gap-2 text-brand-primary font-semibold text-sm sm:text-base hover:gap-3"
           >
             Show all Categories
             <ArrowRight
               size={18}
-              className="transition-transform duration-[var(--transition-base)] group-hover:translate-x-1"
+              // className="transition-transform duration-[var(--transition-base)] group-hover:translate-x-1"
             />
           </Link>
         </div>
