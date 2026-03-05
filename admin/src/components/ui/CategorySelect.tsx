@@ -63,9 +63,15 @@ export default function CategorySelect({
       const data = await res.json();
 
       if (data.success) {
-        setCategories((prev) =>
-          isNewSearch ? data.data : [...prev, ...data.data],
-        );
+        setCategories((prev) => {
+          if (isNewSearch) return data.data;
+          // Filter out existing categories to prevent any duplicate key errors
+          const newItems = data.data.filter(
+            (newItem: Category) =>
+              !prev.some((oldItem) => oldItem.id === newItem.id),
+          );
+          return [...prev, ...newItems];
+        });
         setHasMore(data.pagination.page < data.pagination.totalPages);
       } else {
         alertService.error(

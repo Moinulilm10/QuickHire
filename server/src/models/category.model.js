@@ -47,7 +47,7 @@ class CategoryModel {
       skip,
       take,
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       include: {
         _count: {
           select: { jobs: true },
