@@ -14,18 +14,29 @@ interface CategoryCardProps {
   category: CategoryData;
   index: number;
   isVisible: boolean;
-  Icon: React.ElementType;
 }
 
 export function CategoryCard({
   category,
   index,
   isVisible,
-  Icon,
 }: CategoryCardProps) {
   const [hovered, setHovered] = useState(false);
   const delay = index * 80;
   const jobsCount = category._count?.jobs || 0;
+
+  const getInitials = (name: string) => {
+    if (!name) return "";
+    const safeName = name.replace(/&/g, "").trim();
+    const words = safeName.split(/\s+/).filter(Boolean);
+
+    if (words.length > 1) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return safeName.substring(0, 2).toUpperCase();
+  };
+
+  const initials = getInitials(category.name);
 
   return (
     <Link
@@ -48,7 +59,7 @@ export function CategoryCard({
           "background-color 400ms cubic-bezier(0.16, 1, 0.3, 1), border-color 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >
-      {/* Icon Wrapper */}
+      {/* Initials Wrapper */}
       <div
         className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg mb-4 sm:mb-5"
         style={{
@@ -60,14 +71,15 @@ export function CategoryCard({
             "background-color 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        <Icon
-          size={22}
-          strokeWidth={1.8}
+        <span
+          className="text-lg sm:text-xl font-bold tracking-wide"
           style={{
             color: hovered ? "#ffffff" : "var(--brand-primary)",
             transition: "color 400ms cubic-bezier(0.16, 1, 0.3, 1)",
           }}
-        />
+        >
+          {initials}
+        </span>
       </div>
 
       {/* Category Name */}

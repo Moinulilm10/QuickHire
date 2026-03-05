@@ -4,57 +4,12 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import { CategoryCard, CategoryData } from "@/components/ui/CategoryCard";
 import { alertService } from "@/utils/alertService";
-import {
-  BarChart3,
-  Box,
-  Briefcase,
-  Camera,
-  Code,
-  Database,
-  Globe,
-  Headset,
-  Layout,
-  Megaphone,
-  Monitor,
-  Palette,
-  PenTool,
-  Server,
-  Shield,
-  Terminal,
-  Users,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-
-const ICON_POOL = [
-  PenTool,
-  BarChart3,
-  Megaphone,
-  Camera,
-  Monitor,
-  Code,
-  Briefcase,
-  Users,
-  Terminal,
-  Server,
-  Database,
-  Shield,
-  Palette,
-  Layout,
-  Globe,
-  Headset,
-  Box,
-];
-
+import { useEffect, useState } from "react";
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
-  // Use memoization for assigning regular icons based on array index
-  const categoryIcons = useMemo(() => {
-    return categories.map((_, i) => ICON_POOL[i % ICON_POOL.length]);
-  }, [categories]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -123,7 +78,6 @@ export default function CategoriesPage() {
                       category={category}
                       index={index}
                       isVisible={true}
-                      Icon={categoryIcons[index]}
                     />
                   ))}
             </div>

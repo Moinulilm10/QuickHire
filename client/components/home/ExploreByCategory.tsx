@@ -1,60 +1,15 @@
 "use client";
 
 import { CategoryCard, CategoryData } from "@/components/ui/CategoryCard";
-import {
-  ArrowRight,
-  BarChart3,
-  Box,
-  Briefcase,
-  Camera,
-  Code,
-  Database,
-  Globe,
-  Headset,
-  Layout,
-  Megaphone,
-  Monitor,
-  Palette,
-  PenTool,
-  Server,
-  Shield,
-  Terminal,
-  Users,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-
-// Fallback pool of icons to assign to categories
-const ICON_POOL = [
-  PenTool,
-  BarChart3,
-  Megaphone,
-  Camera,
-  Monitor,
-  Code,
-  Briefcase,
-  Users,
-  Terminal,
-  Server,
-  Database,
-  Shield,
-  Palette,
-  Layout,
-  Globe,
-  Headset,
-  Box,
-];
+import { useEffect, useRef, useState } from "react";
 
 export default function ExploreByCategory() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Memoize random icons so they don't change on every re-render
-  const categoryIcons = useMemo(() => {
-    return categories.map((_, i) => ICON_POOL[i % ICON_POOL.length]);
-  }, [categories]);
 
   // Fetch top 8 categories sorted by jobs
   useEffect(() => {
@@ -138,7 +93,6 @@ export default function ExploreByCategory() {
                   category={category}
                   index={index}
                   isVisible={isVisible}
-                  Icon={categoryIcons[index]}
                 />
               ))}
         </div>
