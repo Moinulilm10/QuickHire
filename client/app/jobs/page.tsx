@@ -3,12 +3,14 @@
 import JobCard from "@/components/jobs/JobCard";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
-import { jobsData } from "@/data/jobsData";
+import { Job } from "@/data/jobsData";
 import { MapPin, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 function JobsPageContent() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [isVisible, setIsVisible] = useState(false);
@@ -17,9 +19,39 @@ function JobsPageContent() {
 
   useEffect(() => {
     setIsVisible(true);
+
+    const fetchJobs = async () => {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+        const res = await fetch(`${apiUrl}/jobs?limit=100`);
+        const data = await res.json();
+
+        if (data.success) {
+          const formatted = data.jobs.map((job: any) => ({
+            id: job.id.toString(),
+            title: job.title,
+            company: job.company?.name || "Unknown Company",
+            location: job.location || "Remote",
+            type: job.type || "Full Time",
+            categories: job.categories?.map((c: any) => c.name) || [],
+            logoColor: job.company?.logoColor || "#0061FF",
+            logoUrl: job.company?.logoUrl,
+            description: job.description,
+          }));
+          setJobs(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to fetch jobs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
   }, []);
 
-  const filteredJobs = jobsData.filter((job) => {
+  const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -96,7 +128,16 @@ function JobsPageContent() {
               </h2>
             </div>
 
-            {filteredJobs.length > 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[280px] bg-white/50 animate-pulse rounded border border-surface-border shadow-sm"
+                  ></div>
+                ))}
+              </div>
+            ) : filteredJobs.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 tracking-tight">
                 {filteredJobs.map((job, index) => (
                   <JobCard key={job.id} job={job} index={index} />

@@ -40,6 +40,18 @@ exports.getJobById = async (req, res, next) => {
   }
 };
 
+exports.getLatestJobs = async (req, res, next) => {
+  try {
+    const jobs = await jobModel.getLatestJobs();
+    res.status(200).json({
+      success: true,
+      data: jobs,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.createJob = async (req, res, next) => {
   try {
     const job = await jobModel.createJob(req.body);

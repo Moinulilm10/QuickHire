@@ -22,6 +22,39 @@ class JobModel {
     });
   }
 
+  async getLatestJobs() {
+    const hours72Ago = new Date(Date.now() - 72 * 60 * 60 * 1000);
+    const hours96Ago = new Date(Date.now() - 96 * 60 * 60 * 1000);
+
+    // Try within 72 hours
+    let jobs = await prisma.job.findMany({
+      where: {
+        createdAt: {
+          gte: hours72Ago,
+        },
+      },
+      include: { company: true, categories: true },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    });
+
+    if (jobs.length < 8) {
+      // If less than 8, expand to 96 hours
+      jobs = await prisma.job.findMany({
+        where: {
+          createdAt: {
+            gte: hours96Ago,
+          },
+        },
+        include: { company: true, categories: true },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+      });
+    }
+
+    return jobs;
+  }
+
   async createJob(jobData) {
     const { company, categories, ...sanitiziedData } = jobData;
 
