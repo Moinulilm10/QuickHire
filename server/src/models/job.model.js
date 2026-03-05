@@ -17,7 +17,7 @@ class JobModel {
 
   async getJobById(id) {
     return await prisma.job.findUnique({
-      where: { id },
+      where: { id: parseInt(id) },
       include: { company: true, categories: true },
     });
   }
@@ -113,7 +113,7 @@ class JobModel {
     }
 
     return await prisma.job.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: sanitiziedData,
       include: { categories: true },
     });
@@ -121,7 +121,7 @@ class JobModel {
 
   async deleteJob(id) {
     return await prisma.job.delete({
-      where: { id },
+      where: { id: parseInt(id) },
     });
   }
 }

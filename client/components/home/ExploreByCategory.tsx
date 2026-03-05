@@ -1,6 +1,7 @@
 "use client";
 
 import { CategoryCard, CategoryData } from "@/components/ui/CategoryCard";
+import { categoryService } from "@/services/category.service";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -15,14 +16,8 @@ export default function ExploreByCategory() {
   useEffect(() => {
     const fetchTopCategories = async () => {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-        const res = await fetch(`${apiUrl}/categories?limit=8&sort=jobs`);
-        const data = await res.json();
-
-        if (data.success) {
-          setCategories(data.data);
-        }
+        const data = await categoryService.getTopCategories(8);
+        setCategories(data);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
       } finally {

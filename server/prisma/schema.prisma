@@ -33,7 +33,7 @@ model Company {
 }
 
 model Job {
-  id           String           @id @default(cuid())
+  id           Int              @id @default(autoincrement())
   uuid         String           @unique @default(uuid())
   title        String
   companyId    Int
@@ -62,10 +62,10 @@ model Category {
 }
 
 model JobApplication {
-  id          String   @id @default(cuid())
+  id          Int      @id @default(autoincrement())
   uuid        String   @unique @default(uuid())
   userId      Int
-  jobId       String
+  jobId       Int
   companyId   Int
   status      String   @default("PENDING")
   resume      String?
