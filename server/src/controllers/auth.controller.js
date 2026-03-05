@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const prisma = require("../config/prisma");
+const AuthModel = require("../models/auth.model");
 
 // Secret key for JWT
 const JWT_SECRET = process.env.JWT_SECRET || "QUICKHIRE_SUPER_SECRET_KEY_2026";
@@ -18,7 +18,7 @@ exports.signup = async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await AuthModel.findUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -31,12 +31,10 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || email.split("@")[0],
-      },
+    const user = await AuthModel.createUser({
+      email,
+      password: hashedPassword,
+      name: name || email.split("@")[0],
     });
 
     // Generate JWT
@@ -77,7 +75,7 @@ exports.login = async (req, res) => {
     }
 
     // Find user by email
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await AuthModel.findUserByEmail(email);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -140,17 +138,7 @@ exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        uuid: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const user = await AuthModel.findUserById(userId);
 
     if (!user) {
       return res
@@ -192,7 +180,7 @@ exports.googleAuth = async (req, res) => {
     const { email, name } = payload;
 
     // Check if user exists
-    let user = await prisma.user.findUnique({ where: { email } });
+    let user = await AuthModel.findUserByEmail(email);
 
     // Handle Edge Cases
     if (intent === "signup") {
@@ -204,12 +192,10 @@ exports.googleAuth = async (req, res) => {
       }
 
       // Create user if signup and doesn't exist
-      user = await prisma.user.create({
-        data: {
-          email,
-          name: name || email.split("@")[0],
-          authProvider: "google",
-        },
+      user = await AuthModel.createUser({
+        email,
+        name: name || email.split("@")[0],
+        authProvider: "google",
       });
     } else if (intent === "login") {
       if (!user) {
@@ -263,21 +249,8 @@ exports.getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          uuid: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          authProvider: true,
-        },
-        orderBy: [{ role: "asc" }, { createdAt: "desc" }],
-      }),
-      prisma.user.count(),
+      AuthModel.getAllUsers({ skip, take: limit }),
+      AuthModel.countUsers(),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -312,9 +285,7 @@ exports.deleteUser = async (req, res) => {
     }
 
     // Find the user to be deleted
-    const userToDelete = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
-    });
+    const userToDelete = await AuthModel.findUserById(parseInt(id));
 
     if (!userToDelete) {
       return res.status(404).json({
@@ -339,16 +310,8 @@ exports.deleteUser = async (req, res) => {
       });
     }
 
-    // Delete user (Prisma will handle cascading if configured, or block if foreign keys exist)
-    // In this schema, JobApplication has a relation to User.
-    // If we want to allow deletion, we might need to delete applications first if not on CASCADE.
-    await prisma.jobApplication.deleteMany({
-      where: { userId: userToDelete.id },
-    });
-
-    await prisma.user.delete({
-      where: { id: userToDelete.id },
-    });
+    await AuthModel.deleteUserDependencies(userToDelete.id);
+    await AuthModel.deleteUserById(userToDelete.id);
 
     res.status(200).json({
       success: true,

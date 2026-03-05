@@ -1,4 +1,4 @@
-const prisma = require("../config/prisma");
+const CategoryModel = require("../models/category.model");
 
 exports.getAllCategories = async (req, res) => {
   try {
@@ -7,17 +7,8 @@ exports.getAllCategories = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [categories, total] = await Promise.all([
-      prisma.category.findMany({
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          _count: {
-            select: { jobs: true },
-          },
-        },
-      }),
-      prisma.category.count(),
+      CategoryModel.getAllCategoriesPaginated({ skip, take: limit }),
+      CategoryModel.countCategories(),
     ]);
 
     res.status(200).json({
@@ -39,15 +30,7 @@ exports.getAllCategories = async (req, res) => {
 exports.getCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
-    const category = await prisma.category.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        jobs: true,
-        _count: {
-          select: { jobs: true },
-        },
-      },
-    });
+    const category = await CategoryModel.getCategoryById(id);
 
     if (!category) {
       return res
@@ -73,16 +56,14 @@ exports.createCategory = async (req, res) => {
     }
 
     // Check if category exists
-    const existing = await prisma.category.findUnique({ where: { name } });
+    const existing = await CategoryModel.getCategoryByName(name);
     if (existing) {
       return res
         .status(400)
         .json({ success: false, message: "Category already exists" });
     }
 
-    const category = await prisma.category.create({
-      data: { name },
-    });
+    const category = await CategoryModel.createCategory(name);
 
     res.status(201).json({ success: true, data: category });
   } catch (error) {
@@ -103,17 +84,14 @@ exports.updateCategory = async (req, res) => {
     }
 
     // Check if new name conflicts with existing
-    const existing = await prisma.category.findUnique({ where: { name } });
+    const existing = await CategoryModel.getCategoryByName(name);
     if (existing && existing.id !== parseInt(id)) {
       return res
         .status(400)
         .json({ success: false, message: "Category name already in use" });
     }
 
-    const category = await prisma.category.update({
-      where: { id: parseInt(id) },
-      data: { name },
-    });
+    const category = await CategoryModel.updateCategory(id, name);
 
     res.status(200).json({ success: true, data: category });
   } catch (error) {
@@ -131,9 +109,7 @@ exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.category.delete({
-      where: { id: parseInt(id) },
-    });
+    await CategoryModel.deleteCategory(id);
 
     res
       .status(200)
