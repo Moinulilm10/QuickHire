@@ -3,6 +3,7 @@
 import {
   Briefcase,
   LayoutDashboard,
+  List,
   LogOut,
   Menu,
   Users,
@@ -15,6 +16,7 @@ import { useState } from "react";
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
+  { label: "Categories", href: "/dashboard/categories", icon: List },
   { label: "Users", href: "/dashboard/users", icon: Users },
 ];
 

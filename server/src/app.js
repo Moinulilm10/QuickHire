@@ -6,6 +6,7 @@ const healthRoutes = require("./routes/health.routes");
 const jobRoutes = require("./routes/job.routes");
 const authRoutes = require("./routes/auth.routes");
 const adminRoutes = require("./routes/admin.routes");
+const categoryRoutes = require("./routes/category.routes");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
