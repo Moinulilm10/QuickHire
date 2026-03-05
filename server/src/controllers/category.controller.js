@@ -4,11 +4,12 @@ exports.getAllCategories = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
     const skip = (page - 1) * limit;
 
     const [categories, total] = await Promise.all([
-      CategoryModel.getAllCategoriesPaginated({ skip, take: limit }),
-      CategoryModel.countCategories(),
+      CategoryModel.getAllCategoriesPaginated({ skip, take: limit, search }),
+      CategoryModel.countCategories({ search }),
     ]);
 
     res.status(200).json({

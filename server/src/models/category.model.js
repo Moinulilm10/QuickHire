@@ -38,10 +38,15 @@ class CategoryModel {
     });
   }
 
-  static async getAllCategoriesPaginated({ skip, take }) {
+  static async getAllCategoriesPaginated({ skip, take, search }) {
+    const where = search
+      ? { name: { contains: search, mode: "insensitive" } }
+      : {};
+
     return prisma.category.findMany({
       skip,
       take,
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
@@ -51,8 +56,11 @@ class CategoryModel {
     });
   }
 
-  static async countCategories() {
-    return prisma.category.count();
+  static async countCategories({ search } = {}) {
+    const where = search
+      ? { name: { contains: search, mode: "insensitive" } }
+      : {};
+    return prisma.category.count({ where });
   }
 }
 

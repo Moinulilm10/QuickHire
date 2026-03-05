@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@/components/ui/Button";
+import CategorySelect from "@/components/ui/CategorySelect";
 import Input from "@/components/ui/Input";
 import LogoUpload from "@/components/ui/LogoUpload";
 import { X } from "lucide-react";
@@ -35,8 +36,8 @@ export default function AddJobForm({
   const [type, setType] = useState(initialData?.type || "");
   const [experience, setExperience] = useState(initialData?.experience || "");
   const [salary, setSalary] = useState(initialData?.salary || "");
-  const [categoriesInput, setCategoriesInput] = useState(
-    initialData?.categories?.join(", ") || "",
+  const [categoriesList, setCategoriesList] = useState<string[]>(
+    initialData?.categories || [],
   );
   const [description, setDescription] = useState(
     initialData?.description || "",
@@ -49,6 +50,8 @@ export default function AddJobForm({
     if (!title.trim()) newErrors.title = "Job title is required";
     if (!company.trim()) newErrors.company = "Company name is required";
     if (!location.trim()) newErrors.location = "Location is required";
+    if (categoriesList.length === 0)
+      newErrors.categories = "At least one category is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -66,10 +69,7 @@ export default function AddJobForm({
       logo,
       experience: experience.trim(),
       salary: salary.trim(),
-      categories: categoriesInput
-        .split(",")
-        .map((cat) => cat.trim())
-        .filter((cat) => cat !== ""),
+      categories: categoriesList,
     });
   };
 
@@ -152,11 +152,17 @@ export default function AddJobForm({
             />
           </div>
 
-          <Input
-            label="Categories"
-            placeholder="e.g. IT, Software, Development (comma separated)"
-            value={categoriesInput}
-            onChange={(e) => setCategoriesInput(e.target.value)}
+          <CategorySelect
+            selectedCategories={categoriesList}
+            onChange={(cats) => {
+              setCategoriesList(cats);
+              if (errors.categories) {
+                const newErrors = { ...errors };
+                delete newErrors.categories;
+                setErrors(newErrors);
+              }
+            }}
+            error={errors.categories}
           />
 
           <div className="w-full">

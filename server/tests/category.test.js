@@ -82,6 +82,31 @@ describe("Category Endpoints", () => {
     expect(res.body.pagination).toHaveProperty("page");
   });
 
+  it("should get all categories with pagination and search", async () => {
+    // Wait for the previous test to ensure categories exist.
+    // Let's create another category just for search testing
+    await request(app)
+      .post("/api/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "SearchableCategoryXYZ" });
+
+    const res = await request(app).get(
+      "/api/categories?page=1&limit=5&search=XYZ",
+    );
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    // Should find the one we just created
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data[0].name).toContain("XYZ");
+
+    // Clean up
+    await prisma.category.deleteMany({
+      where: { name: "SearchableCategoryXYZ" },
+    });
+  });
+
   it("should get a single category by id", async () => {
     const res = await request(app).get(`/api/categories/${testCategory.id}`);
 
