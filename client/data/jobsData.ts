@@ -5,10 +5,10 @@ export interface Job {
   location: string;
   type: string;
   categories: string[];
-  salary?: string;
   logoColor?: string;
   logoUrl?: string;
   description?: string;
+  createdAt?: string;
 }
 
 export const featuredJobs: Job[] = [

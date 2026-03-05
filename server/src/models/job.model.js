@@ -15,9 +15,13 @@ class JobModel {
     return { jobs, total };
   }
 
-  async getJobById(id) {
+  async getJobById(identifier) {
+    // If identifier is a number (or a string of numbers), assume it's the internal ID.
+    // Otherwise, assume it is the string UUID.
+    const isNumeric = /^\d+$/.test(identifier);
+
     return await prisma.job.findUnique({
-      where: { id: parseInt(id) },
+      where: isNumeric ? { id: parseInt(identifier) } : { uuid: identifier },
       include: { company: true, categories: true },
     });
   }
@@ -26,14 +30,25 @@ class JobModel {
     const hours72Ago = new Date(Date.now() - 72 * 60 * 60 * 1000);
     const hours96Ago = new Date(Date.now() - 96 * 60 * 60 * 1000);
 
+    const selectFields = {
+      id: true,
+      uuid: true,
+      title: true,
+      type: true,
+      location: true,
+      salary: true,
+      status: true,
+      logoColor: true,
+      experience: true,
+      logo: true,
+      categories: { select: { id: true, uuid: true, name: true } },
+      createdAt: true,
+    };
+
     // Try within 72 hours
     let jobs = await prisma.job.findMany({
-      where: {
-        createdAt: {
-          gte: hours72Ago,
-        },
-      },
-      include: { company: true, categories: true },
+      where: { createdAt: { gte: hours72Ago } },
+      select: selectFields,
       orderBy: { createdAt: "desc" },
       take: 8,
     });
@@ -41,12 +56,8 @@ class JobModel {
     if (jobs.length < 8) {
       // If less than 8, expand to 96 hours
       jobs = await prisma.job.findMany({
-        where: {
-          createdAt: {
-            gte: hours96Ago,
-          },
-        },
-        include: { company: true, categories: true },
+        where: { createdAt: { gte: hours96Ago } },
+        select: selectFields,
         orderBy: { createdAt: "desc" },
         take: 8,
       });

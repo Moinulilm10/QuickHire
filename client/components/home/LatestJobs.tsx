@@ -1,6 +1,7 @@
 "use client";
 
 import { Job } from "@/data/jobsData";
+import { jobService } from "@/services/job.service";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -16,22 +17,21 @@ export default function LatestJobs() {
   useEffect(() => {
     const fetchLatestJobs = async () => {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-        const res = await fetch(`${apiUrl}/jobs/latest`);
-        const data = await res.json();
+        const jobsData = await jobService.getLatestJobs();
 
-        if (data.success) {
-          const formatted = data.data.map((job: any) => ({
+        if (jobsData) {
+          const formatted = jobsData.map((job: any) => ({
             id: job.id.toString(),
+            uuid: job.uuid,
             title: job.title,
             company: job.company?.name || "Unknown Company",
             location: job.location || "Remote",
             type: job.type || "Full Time",
             categories: job.categories?.map((c: any) => c.name) || [],
-            logoColor: job.company?.logoColor || "#0061FF",
-            logoUrl: job.company?.logoUrl,
-            description: job.description,
+            logoColor: job.logoColor || "#0061FF",
+            logoUrl: job.logo,
+            description: undefined,
+            createdAt: job.createdAt,
           }));
           setJobs(formatted);
         }
