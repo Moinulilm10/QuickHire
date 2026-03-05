@@ -5,10 +5,16 @@ exports.getAllCategories = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || "";
+    const sort = req.query.sort || "";
     const skip = (page - 1) * limit;
 
     const [categories, total] = await Promise.all([
-      CategoryModel.getAllCategoriesPaginated({ skip, take: limit, search }),
+      CategoryModel.getAllCategoriesPaginated({
+        skip,
+        take: limit,
+        search,
+        sort,
+      }),
       CategoryModel.countCategories({ search }),
     ]);
 

@@ -5,22 +5,37 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import { jobsData } from "@/data/jobsData";
 import { MapPin, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
-export default function JobsPage() {
+function JobsPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [isVisible, setIsVisible] = useState(false);
+  const searchParams = useSearchParams();
+  const categoryFilter = searchParams.get("category");
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  const filteredJobs = jobsData.filter(
-    (job) =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      job.location.toLowerCase().includes(locationTerm.toLowerCase()),
-  );
+  const filteredJobs = jobsData.filter((job) => {
+    const matchesSearch = job.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesLocation = job.location
+      .toLowerCase()
+      .includes(locationTerm.toLowerCase());
+    const matchesCategory = categoryFilter
+      ? job.categories.some(
+          (cat) =>
+            cat.toLowerCase().replace(" ", "-") ===
+            categoryFilter.toLowerCase(),
+        )
+      : true;
+
+    return matchesSearch && matchesLocation && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-white">
@@ -100,5 +115,19 @@ export default function JobsPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
+        </div>
+      }
+    >
+      <JobsPageContent />
+    </Suspense>
   );
 }

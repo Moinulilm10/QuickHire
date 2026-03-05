@@ -38,16 +38,21 @@ class CategoryModel {
     });
   }
 
-  static async getAllCategoriesPaginated({ skip, take, search }) {
+  static async getAllCategoriesPaginated({ skip, take, search, sort }) {
     const where = search
       ? { name: { contains: search, mode: "insensitive" } }
       : {};
+
+    const orderBy =
+      sort === "jobs"
+        ? [{ jobs: { _count: "desc" } }, { id: "desc" }]
+        : [{ createdAt: "desc" }, { id: "desc" }];
 
     return prisma.category.findMany({
       skip,
       take,
       where,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy,
       include: {
         _count: {
           select: { jobs: true },
