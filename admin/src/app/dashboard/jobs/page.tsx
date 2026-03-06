@@ -9,23 +9,36 @@ import {
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import SearchInput from "@/components/ui/SearchInput";
+import { useDebounce } from "@/hooks/useDebounce";
 import { initialJobsState, jobsReducer } from "@/reducers/jobs.reducer";
 import { jobService } from "@/services/job.service";
 import { alertService } from "@/utils/alertService";
 import { ArrowLeft, FileText, Loader2, Plus, Trash2 } from "lucide-react";
-import { Suspense, useReducer, useState, useTransition } from "react";
+import {
+  Suspense,
+  useEffect,
+  useReducer,
+  useState,
+  useTransition,
+} from "react";
 
 export default function JobsPage() {
   const [state, dispatch] = useReducer(jobsReducer, initialJobsState);
   const [isPending, startTransition] = useTransition();
+  const debouncedSearch = useDebounce(state.search, 400);
   const [dataPromise, setDataPromise] = useState(() => jobService.getJobs(1));
 
-  const refetch = (page?: number) => {
+  const refetch = (page?: number, search?: string) => {
     const p = page ?? state.currentPage;
+    const s = search ?? debouncedSearch;
     startTransition(() => {
-      setDataPromise(jobService.getJobs(p));
+      setDataPromise(jobService.getJobs(p, s));
     });
   };
+
+  useEffect(() => {
+    refetch(1, debouncedSearch);
+  }, [debouncedSearch]);
 
   const handlePageChange = (page: number) => {
     dispatch({ type: "SET_PAGE", payload: page });

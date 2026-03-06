@@ -1,11 +1,13 @@
 "use client";
 
 import PdfPreviewModal from "@/components/ui/PdfPreviewModal";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   applicantsInitialState,
   applicantsReducer,
 } from "@/reducers/applicantsReducer";
 import { applicationService } from "@/services/application.service";
+import { alertService } from "@/utils/alertService";
 import { Calendar, FileText, Search, Trash2 } from "lucide-react";
 import {
   Suspense,
@@ -15,7 +17,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import toast from "react-hot-toast";
 
 // ─── Data Fetcher ────────────────────────────────────────
 function fetchApplications(): Promise<{ applications: any[] }> {
@@ -26,7 +27,10 @@ function fetchApplications(): Promise<{ applications: any[] }> {
     }))
     .catch((error) => {
       console.error("Failed to fetch applications:", error);
-      toast.error(error.message || "Failed to load applications");
+      alertService.error(
+        "Error",
+        error.message || "Failed to load applications",
+      );
       return { applications: [] };
     });
 }
@@ -47,29 +51,43 @@ function ApplicantsContent({
   const { applications } = data;
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this application?"))
-      return;
-
-    dispatch({ type: "SET_LOADING_ID", payload: id });
-    try {
-      await applicationService.deleteApplication(id);
-      toast.success("Application deleted successfully");
-      refreshData();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete application");
-    } finally {
-      dispatch({ type: "SET_LOADING_ID", payload: null });
-    }
+    alertService
+      .confirm(
+        "Are you sure?",
+        "You are about to delete this application permanently.",
+        "Yes, delete it",
+        true,
+      )
+      .then(async (result) => {
+        if (result.isConfirmed) {
+          dispatch({ type: "SET_LOADING_ID", payload: id });
+          try {
+            await applicationService.deleteApplication(id);
+            alertService.success("Deleted!", "Application has been deleted.");
+            refreshData();
+          } catch (error: any) {
+            alertService.error(
+              "Delete Failed",
+              error.message || "Failed to delete application",
+            );
+          } finally {
+            dispatch({ type: "SET_LOADING_ID", payload: null });
+          }
+        }
+      });
   };
 
   const handleStatusUpdate = async (id: number, status: string) => {
     dispatch({ type: "SET_LOADING_ID", payload: id });
     try {
       await applicationService.updateApplicationStatus(id, status);
-      toast.success("Status updated to " + status);
+      alertService.success("Updated!", `Status updated to ${status}`);
       refreshData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to update status");
+      alertService.error(
+        "Update Failed",
+        error.message || "Failed to update status",
+      );
     } finally {
       dispatch({ type: "SET_LOADING_ID", payload: null });
     }
@@ -128,7 +146,7 @@ function ApplicantsContent({
             onChange={(e) =>
               dispatch({ type: "SET_STATUS_FILTER", payload: e.target.value })
             }
-            className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white min-w-[150px]"
+            className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white min-w-[150px] cursor-pointer"
           >
             <option value="ALL">All Status</option>
             <option value="PENDING">Pending</option>
@@ -246,7 +264,7 @@ function ApplicantsContent({
                               })
                             }
                             title="View Resume"
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 bg-white"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 bg-white cursor-pointer"
                           >
                             <FileText size={18} />
                           </button>
@@ -271,7 +289,7 @@ function ApplicantsContent({
                               })
                             }
                             title="View Cover Letter"
-                            className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-amber-100 bg-white"
+                            className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-amber-100 bg-white cursor-pointer"
                           >
                             <FileText size={18} />
                           </button>
@@ -287,7 +305,7 @@ function ApplicantsContent({
                           onClick={() => handleDelete(app.id)}
                           disabled={state.loadingId === app.id}
                           title="Delete Application"
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 bg-white"
+                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 bg-white cursor-pointer"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -342,19 +360,17 @@ export default function ApplicantsPage() {
     applications: any[];
   } | null>(null);
 
+  const debouncedSearch = useDebounce(state.searchTerm, 400);
+
   // Initialize data on client mount to avoid hydration mismatch
   useEffect(() => {
     setDataPromise(fetchApplications());
   }, []);
 
-  // Debounce search term
+  // Update debounced search in state
   useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch({ type: "SET_DEBOUNCED_SEARCH", payload: state.searchTerm });
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [state.searchTerm]);
+    dispatch({ type: "SET_DEBOUNCED_SEARCH", payload: debouncedSearch });
+  }, [debouncedSearch]);
 
   const refreshData = () => {
     startTransition(() => {

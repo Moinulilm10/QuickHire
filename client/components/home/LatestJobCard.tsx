@@ -31,6 +31,7 @@ export default function LatestJobCard({
   index,
   isVisible,
 }: LatestJobCardProps) {
+  console.log("🚀 ~ LatestJobCard ~ job:", job);
   const [hovered, setHovered] = useState(false);
   const delay = index * 100;
 
@@ -89,7 +90,13 @@ export default function LatestJobCard({
             </h3>
             <p className="text-text-muted text-sm font-medium">
               {job.company} <span className="text-text-light mx-1">•</span>{" "}
-              {job.location}
+              {job.location}{" "}
+              {job.salary && (
+                <>
+                  <span className="text-text-light mx-1">•</span>
+                  <span className="text-brand-primary">{job.salary}</span>
+                </>
+              )}
             </p>
           </div>
 

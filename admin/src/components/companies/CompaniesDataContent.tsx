@@ -81,14 +81,14 @@ export function CompaniesDataContent({
                         onClick={() =>
                           dispatch({ type: "OPEN_MODAL", payload: company })
                         }
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => onDelete(company.id)}
-                        className="p-2 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                        className="p-2 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer"
                         title="Delete"
                       >
                         <Trash2 size={16} />

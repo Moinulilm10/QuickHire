@@ -28,6 +28,7 @@ function fetchFeaturedJobs(): Promise<Job[]> {
           logoColor: job.logoColor || "#0061FF",
           logoUrl: job.logo,
           description: job.description,
+          salary: job.salary,
           createdAt: job.createdAt,
         }));
       }

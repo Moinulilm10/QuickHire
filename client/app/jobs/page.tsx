@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Pagination from "@/components/ui/Pagination";
 import { Job } from "@/data/jobsData";
+import { useDebounce } from "@/hooks/useDebounce";
 import { jobsInitialState, jobsReducer } from "@/reducers/jobsReducer";
 import { MapPin, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -45,6 +46,8 @@ function JobsContent({
   dataPromise,
   searchTerm,
   locationTerm,
+  debouncedSearch,
+  debouncedLocation,
   categoryFilter,
   currentPage,
   onSearchChange,
@@ -54,6 +57,8 @@ function JobsContent({
   dataPromise: Promise<Job[]>;
   searchTerm: string;
   locationTerm: string;
+  debouncedSearch: string;
+  debouncedLocation: string;
   categoryFilter: string | null;
   currentPage: number;
   onSearchChange: (value: string) => void;
@@ -65,10 +70,10 @@ function JobsContent({
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title
       .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+      .includes(debouncedSearch.toLowerCase());
     const matchesLocation = job.location
       .toLowerCase()
-      .includes(locationTerm.toLowerCase());
+      .includes(debouncedLocation.toLowerCase());
     const matchesCategory = categoryFilter
       ? job.categories.some(
           (cat) =>
@@ -126,7 +131,7 @@ function JobsContent({
                   onChange={(e) => onLocationChange(e.target.value)}
                 />
               </div>
-              <button className="bg-brand-primary text-white font-bold px-8 py-4 hover:bg-brand-primary-hover transition-all duration-300">
+              <button className="bg-brand-primary text-white font-bold px-8 py-4 hover:bg-brand-primary-hover transition-all duration-300 cursor-pointer">
                 Search Jobs
               </button>
             </div>
@@ -196,6 +201,9 @@ function JobsPageContent() {
   const [isPending, startTransition] = useTransition();
   const promiseRef = useRef(fetchJobs());
 
+  const debouncedSearch = useDebounce(state.searchTerm, 400);
+  const debouncedLocation = useDebounce(state.locationTerm, 400);
+
   return (
     <div className={isPending ? "opacity-60 transition-opacity" : ""}>
       <Suspense fallback={<JobsSkeleton />}>
@@ -203,6 +211,8 @@ function JobsPageContent() {
           dataPromise={promiseRef.current}
           searchTerm={state.searchTerm}
           locationTerm={state.locationTerm}
+          debouncedSearch={debouncedSearch}
+          debouncedLocation={debouncedLocation}
           categoryFilter={categoryFilter}
           currentPage={state.currentPage}
           onSearchChange={(value) =>

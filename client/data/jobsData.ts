@@ -9,6 +9,7 @@ export interface Job {
   logoColor?: string;
   logoUrl?: string;
   description?: string;
+  salary?: string;
   createdAt?: string;
 }
 

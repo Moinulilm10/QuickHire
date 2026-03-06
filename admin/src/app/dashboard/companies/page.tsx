@@ -6,13 +6,21 @@ import {
 } from "@/components/companies/CompaniesDataContent";
 import CompanyForm from "@/components/companies/CompanyForm";
 import SearchInput from "@/components/ui/SearchInput";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   companiesReducer,
   initialCompaniesState,
 } from "@/reducers/companies.reducer";
 import { companyService } from "@/services/company.service";
+import { alertService } from "@/utils/alertService";
 import { Loader2, Plus } from "lucide-react";
-import { Suspense, useReducer, useState, useTransition } from "react";
+import {
+  Suspense,
+  useEffect,
+  useReducer,
+  useState,
+  useTransition,
+} from "react";
 
 export default function CompaniesPage() {
   const [state, dispatch] = useReducer(companiesReducer, initialCompaniesState);
@@ -20,27 +28,23 @@ export default function CompaniesPage() {
   const [dataPromise, setDataPromise] = useState(() =>
     companyService.getCompanies(1, 10),
   );
-  const [searchTimeout, setSearchTimeout] = useState<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+
+  const debouncedSearch = useDebounce(state.search, 400);
 
   const refetch = (page?: number, search?: string) => {
     const p = page ?? state.currentPage;
-    const s = search ?? state.search;
+    const s = search ?? debouncedSearch;
     startTransition(() => {
       setDataPromise(companyService.getCompanies(p, 10, s));
     });
   };
 
+  useEffect(() => {
+    refetch(1, debouncedSearch);
+  }, [debouncedSearch]);
+
   const handleSearchChange = (value: string) => {
     dispatch({ type: "SET_SEARCH", payload: value });
-    if (searchTimeout) clearTimeout(searchTimeout);
-    const timeout = setTimeout(() => {
-      startTransition(() => {
-        setDataPromise(companyService.getCompanies(1, 10, value));
-      });
-    }, 400);
-    setSearchTimeout(timeout);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -52,23 +56,47 @@ export default function CompaniesPage() {
             state.formData,
           )
         : await companyService.createCompany(state.formData);
+
       if (res.success) {
+        alertService.success(
+          "Success!",
+          `Company ${state.currentCompany ? "updated" : "added"} successfully.`,
+        );
         dispatch({ type: "CLOSE_MODAL" });
         refetch();
       }
-    } catch (error) {
-      console.error("Failed to save company", error);
+    } catch (error: any) {
+      alertService.error(
+        "Save Failed",
+        error.message || "Failed to save company",
+      );
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this company?")) return;
-    try {
-      const res = await companyService.deleteCompany(id);
-      if (res.success) refetch();
-    } catch (error) {
-      console.error("Failed to delete company:", error);
-    }
+    alertService
+      .confirm(
+        "Are you sure?",
+        "Deleting this company will remove all associated data.",
+        "Yes, delete it",
+        true,
+      )
+      .then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const res = await companyService.deleteCompany(id);
+            if (res.success) {
+              alertService.success("Deleted!", "Company has been deleted.");
+              refetch();
+            }
+          } catch (error: any) {
+            alertService.error(
+              "Delete Failed",
+              error.message || "Failed to delete company",
+            );
+          }
+        }
+      });
   };
 
   return (
@@ -137,14 +165,14 @@ export default function CompaniesPage() {
               <button
                 type="button"
                 onClick={() => dispatch({ type: "CLOSE_MODAL" })}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-border rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-border rounded-lg transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 form="company-form"
                 type="submit"
-                className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors cursor-pointer"
               >
                 {state.currentCompany ? "Save Changes" : "Add Company"}
               </button>

@@ -22,12 +22,12 @@ function fetchLatestJobs(): Promise<Job[]> {
           uuid: job.uuid,
           title: job.title,
           company: job.company?.name || "Unknown Company",
-          location: job.location || "Remote",
-          type: job.type || "Full Time",
+          location: job.location,
+          type: job.type,
           categories: job.categories?.map((c: any) => c.name) || [],
           logoColor: job.logoColor || "#0061FF",
           logoUrl: job.logo,
-          description: undefined,
+          salary: job.salary,
           createdAt: job.createdAt,
         }));
       }
@@ -48,6 +48,7 @@ function LatestJobsContent({
   isVisible: boolean;
 }) {
   const jobs = use(dataPromise);
+  console.log("🚀 ~ LatestJobsContent ~ jobs:", jobs);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

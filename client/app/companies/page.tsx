@@ -3,6 +3,7 @@
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Pagination from "@/components/ui/Pagination";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   companiesInitialState,
   companiesReducer,
@@ -80,7 +81,7 @@ function CompaniesContent({
               <Link
                 key={company.id}
                 href={`/companies/${company.uuid}`}
-                className="block group"
+                className="block group cursor-pointer"
               >
                 <div
                   className="bg-white border border-surface-border rounded-xl p-6 hover:shadow-card hover:border-brand-primary transition-all duration-300 animate-fade-in-up h-full flex flex-col items-center text-center"
@@ -167,26 +168,15 @@ function CompaniesSkeleton() {
 export default function CompaniesPage() {
   const [state, dispatch] = useReducer(companiesReducer, companiesInitialState);
   const [isPending, startTransition] = useTransition();
+  const debouncedSearch = useDebounce(state.searchTerm, 400);
   const promiseRef = useRef(fetchCompanies(1, ""));
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch({ type: "SET_DEBOUNCED_SEARCH", payload: state.searchTerm });
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [state.searchTerm]);
 
   // Re-fetch when page or debounced search changes
   useEffect(() => {
     startTransition(() => {
-      promiseRef.current = fetchCompanies(
-        state.currentPage,
-        state.debouncedSearch,
-      );
+      promiseRef.current = fetchCompanies(state.currentPage, debouncedSearch);
     });
-  }, [state.currentPage, state.debouncedSearch]);
+  }, [state.currentPage, debouncedSearch]);
 
   const handlePageChange = (page: number) => {
     dispatch({ type: "SET_PAGE", payload: page });
@@ -208,7 +198,7 @@ export default function CompaniesPage() {
               discover where your next career move could be.
             </p>
 
-            <div className="max-w-2xl mx-auto relative group">
+            <div className="max-w-2xl mx-auto relative group cursor-pointer">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search
                   className="text-text-muted group-focus-within:text-brand-primary transition-colors"

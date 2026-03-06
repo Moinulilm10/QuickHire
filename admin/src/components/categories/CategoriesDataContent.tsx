@@ -111,14 +111,14 @@ export function CategoriesDataContent({
                                 payload: category,
                               })
                             }
-                            className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                            className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Edit size={16} />
                           </button>
                           <button
                             onClick={() => onDelete(category)}
-                            className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                            className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 size={16} />

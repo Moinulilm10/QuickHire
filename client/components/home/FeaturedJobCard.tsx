@@ -91,6 +91,12 @@ export default function FeaturedJobCard({
             <span>{job.company}</span>
             <span className="text-text-light">•</span>
             <span>{job.location}</span>
+            {job.salary && (
+              <>
+                <span className="text-text-light">•</span>
+                <span className="text-brand-primary">{job.salary}</span>
+              </>
+            )}
           </div>
         </div>
 
