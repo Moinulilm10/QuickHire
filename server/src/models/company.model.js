@@ -17,6 +17,9 @@ class CompanyModel {
           jobs: {
             where: { status: "active" },
           },
+          _count: {
+            select: { applications: true },
+          },
         },
         orderBy: { createdAt: "desc" },
       }),
@@ -34,6 +37,9 @@ class CompanyModel {
       include: {
         jobs: {
           where: { status: "active" },
+        },
+        _count: {
+          select: { applications: true },
         },
       },
     });

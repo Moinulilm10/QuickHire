@@ -126,6 +126,9 @@ function CompanyContent({
                   <span className="px-3 py-1 bg-surface-muted border border-surface-border rounded-lg text-sm font-semibold text-text-body">
                     {company.jobs?.length || 0} Active Opportunities
                   </span>
+                  <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-lg text-sm font-semibold">
+                    {company._count?.applications || 0} Applications
+                  </span>
                 </div>
               </div>
             </div>

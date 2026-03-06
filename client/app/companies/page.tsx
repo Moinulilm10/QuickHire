@@ -107,9 +107,14 @@ function CompaniesContent({
                   <p className="text-sm text-text-muted mb-4">
                     {company.location}
                   </p>
-                  <span className="mt-auto px-4 py-1.5 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-semibold">
-                    {company.jobs?.length || 0} Jobs Available
-                  </span>
+                  <div className="mt-auto flex flex-col sm:flex-row gap-2 w-full justify-center">
+                    <span className="px-4 py-1.5 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-semibold">
+                      {company.jobs?.length || 0} Jobs Available
+                    </span>
+                    <span className="px-4 py-1.5 bg-surface-muted border border-surface-border text-text-body rounded-full text-xs font-semibold">
+                      {company._count?.applications || 0} Applications
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}

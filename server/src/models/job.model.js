@@ -7,7 +7,11 @@ class JobModel {
       prisma.job.findMany({
         skip,
         take: limit,
-        include: { company: true, categories: true },
+        include: {
+          company: true,
+          categories: true,
+          _count: { select: { applications: true } },
+        },
         orderBy: { createdAt: "desc" },
       }),
       prisma.job.count(),
@@ -20,7 +24,11 @@ class JobModel {
 
     return await prisma.job.findUnique({
       where: isNumeric ? { id: parseInt(identifier) } : { uuid: identifier },
-      include: { company: true, categories: true },
+      include: {
+        company: true,
+        categories: true,
+        _count: { select: { applications: true } },
+      },
     });
   }
 
@@ -41,6 +49,7 @@ class JobModel {
       logo: true,
       categories: { select: { id: true, uuid: true, name: true } },
       createdAt: true,
+      _count: { select: { applications: true } },
     };
 
     // Try within 72 hours
@@ -73,6 +82,7 @@ class JobModel {
       include: {
         company: true,
         categories: true,
+        _count: { select: { applications: true } },
       },
       orderBy: [{ createdAt: "desc" }],
       take: 8,

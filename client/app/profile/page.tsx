@@ -1,13 +1,16 @@
 "use client";
 
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
+import PdfPreviewModal from "@/components/ui/PdfPreviewModal";
 import { useAuth } from "@/context/AuthContext";
 import { profileInitialState, profileReducer } from "@/reducers/profileReducer";
+import { applicationService } from "@/services/application.service";
 import { alertService } from "@/utils/alertService";
 import {
   Briefcase,
   Calendar,
   ExternalLink,
+  FileText,
   Loader2,
   Mail,
   Shield,
@@ -22,37 +25,6 @@ export default function ProfilePage() {
   const { user, token, isLoaded, logout } = useAuth();
   const router = useRouter();
   const [state, dispatch] = useReducer(profileReducer, profileInitialState);
-
-  // Mock applied jobs data for UI purposes
-  const mockAppliedJobs = [
-    {
-      id: "1",
-      title: "Senior Full Stack Engineer",
-      company: "TechNova Solutions",
-      appliedDate: "2026-03-01T10:00:00Z",
-      status: "In Review",
-      location: "San Francisco, CA",
-      type: "Full-Time",
-    },
-    {
-      id: "2",
-      title: "Frontend Developer (React/Next.js)",
-      company: "Creative Web Agency",
-      appliedDate: "2026-02-25T14:30:00Z",
-      status: "Interviewing",
-      location: "Remote",
-      type: "Contract",
-    },
-    {
-      id: "3",
-      title: "Backend Engineer",
-      company: "DataDrive Inc.",
-      appliedDate: "2026-02-15T09:15:00Z",
-      status: "Rejected",
-      location: "New York, NY",
-      type: "Full-Time",
-    },
-  ];
 
   useEffect(() => {
     if (isLoaded) {
@@ -73,23 +45,37 @@ export default function ProfilePage() {
     try {
       const apiUrl =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-      const res = await fetch(`${apiUrl}/auth/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
-      const data = await res.json();
+      const [profileRes, appsData] = await Promise.all([
+        fetch(`${apiUrl}/auth/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }).then((res) => res.json()),
+        applicationService.getMyApplications(token as string).catch((err) => {
+          console.error(err);
+          return { success: false, data: [] };
+        }),
+      ]);
 
-      if (data.success) {
-        dispatch({ type: "FETCH_SUCCESS", payload: data.user });
+      if (profileRes.success) {
+        dispatch({ type: "FETCH_SUCCESS", payload: profileRes.user });
+        if (appsData.success) {
+          dispatch({
+            type: "FETCH_APPLICATIONS_SUCCESS",
+            payload: appsData.data,
+          });
+        }
       } else {
-        if (res.status === 401) {
+        if (
+          profileRes.status === 401 ||
+          profileRes.message === "Unauthorized"
+        ) {
           logout();
         } else {
           alertService.error(
             "Error",
-            data.message || "Could not fetch profile",
+            profileRes.message || "Could not fetch profile",
           );
         }
       }
@@ -245,53 +231,71 @@ export default function ProfilePage() {
                     Applied Jobs
                   </h2>
                   <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm font-bold">
-                    {mockAppliedJobs.length} Applications
+                    {state.applications.length} Applications
                   </span>
                 </div>
 
                 <div className="space-y-4">
-                  {mockAppliedJobs.map((job) => (
-                    <Link
-                      href={`/jobs/${job.id}`}
-                      key={job.id}
-                      className="block group cursor-pointer"
-                    >
-                      <div className="p-5 rounded-2xl border border-surface-border bg-white hover:border-brand-primary hover:shadow-md transition-all duration-300 transform group-hover:-translate-y-1">
+                  {state.applications.map((app) => (
+                    <div key={app.id} className="block group relative">
+                      <div className="p-5 rounded-2xl border border-surface-border bg-white hover:border-brand-primary hover:shadow-md transition-all duration-300">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div>
-                            <h3 className="text-lg font-bold text-text-dark group-hover:text-brand-primary transition-colors flex items-center gap-2">
-                              {job.title}
-                              <ExternalLink
-                                size={14}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              />
-                            </h3>
+                            <Link href={`/jobs/${app.job?.uuid || ""}`}>
+                              <h3 className="text-lg font-bold text-text-dark hover:text-brand-primary transition-colors inline-flex items-center gap-2 cursor-pointer">
+                                {app.job?.title || "Unknown Job"}
+                                <ExternalLink
+                                  size={14}
+                                  className="opacity-50 hover:opacity-100 transition-opacity"
+                                />
+                              </h3>
+                            </Link>
                             <p className="text-text-muted mt-1 font-medium">
-                              {job.company} • {job.location} • {job.type}
+                              {app.company?.name || "Unknown Company"} •{" "}
+                              {app.job?.location || "Remote"} •{" "}
+                              {app.job?.type || "Full Time"}
                             </p>
+                            {app.resume && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  dispatch({
+                                    type: "OPEN_PREVIEW",
+                                    payload: app.resume,
+                                  });
+                                }}
+                                className="mt-3 text-sm text-brand-primary font-medium hover:underline inline-flex items-center gap-1"
+                              >
+                                <FileText size={16} /> View Submitted Resume
+                              </button>
+                            )}
                           </div>
                           <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                job.status === "In Review"
+                                app.status === "PENDING" ||
+                                app.status === "In Review"
                                   ? "bg-amber-100 text-amber-700"
-                                  : job.status === "Interviewing"
+                                  : app.status === "ACCEPTED" ||
+                                      app.status === "Interviewing"
                                     ? "bg-blue-100 text-blue-700"
-                                    : "bg-red-100 text-red-700"
+                                    : app.status === "HIRED"
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-red-100 text-red-700"
                               }`}
                             >
-                              {job.status}
+                              {app.status}
                             </span>
-                            <span className="text-xs text-text-muted font-medium flex items-center gap-1">
+                            <span className="text-xs text-text-muted font-medium flex items-center gap-1 mt-1">
                               <Calendar size={12} />
-                              {new Date(job.appliedDate).toLocaleDateString()}
+                              {new Date(app.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
-                  {mockAppliedJobs.length === 0 && (
+                  {state.applications.length === 0 && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-surface-muted rounded-full flex items-center justify-center mx-auto mb-4 text-text-muted">
                         <Briefcase size={28} />
@@ -358,6 +362,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <PdfPreviewModal
+        isOpen={!!state.previewPdfUrl}
+        onClose={() => dispatch({ type: "CLOSE_PREVIEW" })}
+        pdfUrl={state.previewPdfUrl}
+        title="My Submitted Resume"
+      />
     </main>
   );
 }

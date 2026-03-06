@@ -5,7 +5,8 @@ export interface Company {
   name: string;
   location: string;
   logo: string | null;
-  jobs: any[];
+  jobs?: any[];
+  _count?: { applications: number };
 }
 
 export interface CompaniesState {

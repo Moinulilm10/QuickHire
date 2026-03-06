@@ -1,5 +1,6 @@
 "use client";
 
+import ApplyModal from "@/components/jobs/ApplyModal";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import {
@@ -38,8 +39,14 @@ function fetchJobDetails(
 // ─── Inner Content ───────────────────────────────────────
 function JobDetailsContent({
   dataPromise,
+  isApplyModalOpen,
+  onApplyClick,
+  onModalClose,
 }: {
   dataPromise: Promise<{ job: any; error: string | null }>;
+  isApplyModalOpen: boolean;
+  onApplyClick: () => void;
+  onModalClose: () => void;
 }) {
   const { job, error } = use(dataPromise);
 
@@ -134,7 +141,10 @@ function JobDetailsContent({
 
               {/* Apply Action */}
               <div className="md:self-center shrink-0 w-full md:w-auto mt-6 md:mt-0">
-                <button className="w-full md:w-auto bg-brand-primary text-white font-bold px-8 py-4 rounded-md hover:bg-brand-primary-hover hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300">
+                <button
+                  onClick={onApplyClick}
+                  className="w-full md:w-auto bg-brand-primary text-white font-bold px-8 py-4 rounded-md hover:bg-brand-primary-hover hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                >
                   Apply for this job
                 </button>
                 <p className="text-center text-sm text-text-muted mt-3">
@@ -266,6 +276,16 @@ function JobDetailsContent({
         </div>
       </main>
 
+      {job && (
+        <ApplyModal
+          isOpen={isApplyModalOpen}
+          onClose={onModalClose}
+          jobId={job.id}
+          companyId={job.companyId}
+          jobTitle={job.title}
+        />
+      )}
+
       <Footer />
     </div>
   );
@@ -287,12 +307,22 @@ export default function JobDetailsPage({
   params: Promise<{ uuid: string }>;
 }) {
   const { uuid } = use(params);
-  const [, dispatch] = useReducer(jobDetailsReducer, jobDetailsInitialState);
+  const [state, dispatch] = useReducer(
+    jobDetailsReducer,
+    jobDetailsInitialState,
+  );
   const promiseRef = useRef(fetchJobDetails(uuid));
 
   return (
     <Suspense fallback={<JobDetailsSkeleton />}>
-      <JobDetailsContent dataPromise={promiseRef.current} />
+      <JobDetailsContent
+        dataPromise={promiseRef.current}
+        isApplyModalOpen={state.isApplyModalOpen}
+        onApplyClick={() => dispatch({ type: "SET_MODAL_OPEN", payload: true })}
+        onModalClose={() =>
+          dispatch({ type: "SET_MODAL_OPEN", payload: false })
+        }
+      />
     </Suspense>
   );
 }

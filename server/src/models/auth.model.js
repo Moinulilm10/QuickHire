@@ -1,7 +1,7 @@
 const prisma = require("../config/prisma");
 
 class AuthModel {
-  static async createUser({ email, password, name, authProvider = null }) {
+  static async createUser({ email, password, name, authProvider = undefined }) {
     return prisma.user.create({
       data: {
         email,
