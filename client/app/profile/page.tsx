@@ -18,13 +18,21 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useReducer } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useReducer } from "react";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, token, isLoaded, logout } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [state, dispatch] = useReducer(profileReducer, profileInitialState);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "applied" || tab === "overview" || tab === "settings") {
+      dispatch({ type: "SET_TAB", payload: tab as any });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -267,7 +275,7 @@ export default function ProfilePage() {
                                     },
                                   });
                                 }}
-                                className="mt-3 text-sm text-brand-primary font-medium hover:underline inline-flex items-center gap-1"
+                                className="mt-3 text-sm text-brand-primary font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
                               >
                                 <FileText size={16} /> View Resume
                               </button>
@@ -284,7 +292,7 @@ export default function ProfilePage() {
                                     },
                                   });
                                 }}
-                                className="ml-4 mt-3 text-sm text-amber-600 font-medium hover:underline inline-flex items-center gap-1"
+                                className="ml-4 mt-3 text-sm text-amber-600 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
                               >
                                 <FileText size={16} /> View Cover Letter
                               </button>
@@ -390,5 +398,19 @@ export default function ProfilePage() {
         title={state.previewTitle || "File Preview"}
       />
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+        </div>
+      }
+    >
+      <ProfileContent />
+    </Suspense>
   );
 }

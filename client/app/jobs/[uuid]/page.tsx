@@ -178,7 +178,7 @@ export default function JobDetailsPage({
               <div className="md:self-center shrink-0 w-full md:w-auto mt-6 md:mt-0">
                 {job.applied ? (
                   <Link
-                    href="/profile"
+                    href="/profile?tab=applied"
                     className="w-full md:w-auto  text-brand-primary font-bold transform hover:-translate-y-0.5 transition-all duration-300 inline-flex items-center justify-center gap-2"
                   >
                     <BookCheck className="size-5" />
