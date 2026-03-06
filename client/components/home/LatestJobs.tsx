@@ -21,7 +21,7 @@ function fetchLatestJobs(): Promise<Job[]> {
           id: job.id.toString(),
           uuid: job.uuid,
           title: job.title,
-          company: job.company?.name || "Unknown Company",
+          company: job.company?.name,
           location: job.location,
           type: job.type,
           categories: job.categories?.map((c: any) => c.name) || [],
