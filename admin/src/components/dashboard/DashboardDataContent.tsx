@@ -137,6 +137,7 @@ export function DashboardDataContent({
             )}
           </div>
         </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <Card className="animate-fade-in-up">
