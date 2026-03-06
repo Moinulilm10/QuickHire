@@ -4,6 +4,7 @@ import {
   CompaniesDataContent,
   CompaniesLoadingSkeleton,
 } from "@/components/companies/CompaniesDataContent";
+import CompanyForm from "@/components/companies/CompanyForm";
 import SearchInput from "@/components/ui/SearchInput";
 import {
   companiesReducer,
@@ -123,62 +124,13 @@ export default function CompaniesPage() {
             </div>
 
             <div className="p-6 overflow-y-auto">
-              <form onSubmit={handleSave} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Company Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={state.formData.name}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FORM_FIELD",
-                        field: "name",
-                        value: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-background border border-surface-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={state.formData.location}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FORM_FIELD",
-                        field: "location",
-                        value: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-background border border-surface-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Logo URL
-                  </label>
-                  <input
-                    type="url"
-                    value={state.formData.logo}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FORM_FIELD",
-                        field: "logo",
-                        value: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-background border border-surface-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors"
-                    placeholder="https://example.com/logo.png"
-                  />
-                </div>
-              </form>
+              <CompanyForm
+                formData={state.formData}
+                onChange={(field, value) =>
+                  dispatch({ type: "SET_FORM_FIELD", field, value })
+                }
+                onSubmit={handleSave}
+              />
             </div>
 
             <div className="p-6 border-t border-surface-border flex justify-end gap-3 bg-surface-muted/30">
@@ -190,7 +142,8 @@ export default function CompaniesPage() {
                 Cancel
               </button>
               <button
-                onClick={handleSave}
+                form="company-form"
+                type="submit"
                 className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
                 {state.currentCompany ? "Save Changes" : "Add Company"}
