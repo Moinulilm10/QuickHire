@@ -89,7 +89,7 @@ export default function LatestJobCard({
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`px-3 py-1 rounded-full text-[12px] font-semibold border ${getTagStyles(job.type)}`}
+              className={`px-3 py-1  text-[12px] font-semibold  ${getTagStyles(job.type)}`}
             >
               {job.type}
             </span>
