@@ -13,6 +13,7 @@ import { formatDate } from "@/utils/dateUtils";
 import { getInitials } from "@/utils/stringUtils";
 import {
   ArrowLeft,
+  BookCheck,
   Briefcase,
   Building2,
   Calendar,
@@ -178,8 +179,9 @@ export default function JobDetailsPage({
                 {job.applied ? (
                   <Link
                     href="/profile"
-                    className="w-full md:w-auto bg-green-600 text-white font-bold px-8 py-4 rounded-md hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 inline-flex items-center justify-center gap-2"
+                    className="w-full md:w-auto  text-brand-primary font-bold transform hover:-translate-y-0.5 transition-all duration-300 inline-flex items-center justify-center gap-2"
                   >
+                    <BookCheck className="size-5" />
                     <span>Applied</span>
                   </Link>
                 ) : (
