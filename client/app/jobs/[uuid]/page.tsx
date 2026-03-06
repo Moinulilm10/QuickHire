@@ -138,7 +138,7 @@ export default function JobDetailsPage({
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar size={18} className="text-brand-primary" />
-                    <span>Posted {formattedDateStr}</span>
+                    <span>Posted {formattedDate}</span>
                   </div>
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function JobDetailsPage({
                     <div>
                       <p className="text-sm text-text-muted">Date Posted</p>
                       <p className="font-semibold text-text-dark">
-                        {formattedDateStr}
+                        {formattedDate}
                       </p>
                     </div>
                   </div>

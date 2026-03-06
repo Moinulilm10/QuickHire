@@ -3,6 +3,7 @@
 import JobCard from "@/components/jobs/JobCard";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
+import Pagination from "@/components/ui/Pagination";
 import { Job } from "@/data/jobsData";
 import { MapPin, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -14,8 +15,15 @@ function JobsPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [isVisible, setIsVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 8;
   const searchParams = useSearchParams();
   const categoryFilter = searchParams.get("category");
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, locationTerm, categoryFilter]);
 
   useEffect(() => {
     setIsVisible(true);
@@ -68,6 +76,12 @@ function JobsPageContent() {
 
     return matchesSearch && matchesLocation && matchesCategory;
   });
+
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const paginatedJobs = filteredJobs.slice(
+    (currentPage - 1) * jobsPerPage,
+    currentPage * jobsPerPage,
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -138,11 +152,23 @@ function JobsPageContent() {
                 ))}
               </div>
             ) : filteredJobs.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 tracking-tight">
-                {filteredJobs.map((job, index) => (
-                  <JobCard key={job.id} job={job} index={index} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 tracking-tight">
+                  {paginatedJobs.map((job, index) => (
+                    <JobCard key={job.id} job={job} index={index} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="mt-12 pt-8 border-t border-surface-border">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="py-20 text-center border border-dashed border-surface-border rounded-lg">
                 <p className="text-text-muted text-lg">
