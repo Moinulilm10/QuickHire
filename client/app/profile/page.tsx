@@ -122,7 +122,10 @@ function ProfileContent() {
     );
   }
 
-  if (!state.profileData) return null;
+  const handleSetTab = (tab: "overview" | "applied" | "settings") => {
+    dispatch({ type: "SET_TAB", payload: tab });
+    router.replace(`/profile?tab=${tab}`);
+  };
 
   return (
     <main className="min-h-screen pt-28 pb-12 bg-surface-muted animate-fade-in">
@@ -147,9 +150,7 @@ function ProfileContent() {
         <div className="flex flex-col md:flex-row gap-8">
           <ProfileSidebar
             activeTab={state.activeTab}
-            setActiveTab={(tab: "overview" | "applied" | "settings") =>
-              dispatch({ type: "SET_TAB", payload: tab })
-            }
+            setActiveTab={handleSetTab}
           />
 
           {/* Main Content Area */}
