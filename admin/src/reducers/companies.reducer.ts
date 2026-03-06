@@ -30,7 +30,11 @@ export type CompaniesAction =
   | { type: "SET_PAGE"; payload: number }
   | { type: "OPEN_MODAL"; payload?: Company }
   | { type: "CLOSE_MODAL" }
-  | { type: "SET_FORM_FIELD"; field: keyof CompanyPayload; value: string };
+  | {
+      type: "SET_FORM_FIELD";
+      field: keyof CompanyPayload;
+      value: string | null;
+    };
 
 const initialFormData: CompanyPayload = { name: "", location: "", logo: "" };
 

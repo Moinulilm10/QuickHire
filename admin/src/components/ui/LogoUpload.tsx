@@ -1,5 +1,6 @@
 "use client";
 
+import { getImageUrl } from "@/utils/urlUtils";
 import { ImagePlus, X } from "lucide-react";
 import React, { useRef, useState } from "react";
 
@@ -96,7 +97,7 @@ export default function LogoUpload({ value, onChange }: LogoUploadProps) {
         {value && !uploading && (
           <div className="relative w-full h-full group">
             <img
-              src={value}
+              src={getImageUrl(value)!}
               alt="Logo preview"
               className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
             />

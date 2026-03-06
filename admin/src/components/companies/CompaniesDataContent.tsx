@@ -6,6 +6,8 @@ import type {
   CompaniesResponse,
   CompaniesState,
 } from "@/reducers/companies.reducer";
+import { getInitials } from "@/utils/stringUtils";
+import { getImageUrl } from "@/utils/urlUtils";
 import { Edit2, Trash2 } from "lucide-react";
 import { use } from "react";
 
@@ -59,8 +61,16 @@ export function CompaniesDataContent({
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                        {company.name.charAt(0)}
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden">
+                        {company.logo ? (
+                          <img
+                            src={getImageUrl(company.logo)!}
+                            alt={company.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          getInitials(company.name)
+                        )}
                       </div>
                       <p className="font-semibold text-foreground">
                         {company.name}

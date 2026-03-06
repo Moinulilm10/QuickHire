@@ -3,7 +3,7 @@ import { apiClient } from "./apiClient";
 export interface CompanyPayload {
   name: string;
   location: string;
-  logo: string;
+  logo: string | null;
 }
 
 export const companyService = {
