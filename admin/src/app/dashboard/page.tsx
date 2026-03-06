@@ -1,6 +1,7 @@
 "use client";
 
 import Card from "@/components/ui/Card";
+import { dashboardService } from "@/services/dashboard.service";
 import { alertService } from "@/utils/alertService";
 import {
   Briefcase,
@@ -42,17 +43,7 @@ export default function DashboardPage() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-      const token = localStorage.getItem("adminToken");
-
-      const res = await fetch(`${apiUrl}/admin/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
+      const data = await dashboardService.getStats();
 
       if (data.success) {
         setStats(data.stats);

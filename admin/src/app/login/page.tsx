@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { authService } from "@/services/auth.service";
 import { Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,15 +25,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
-      const res = await fetch(`${apiUrl}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
+      const data = await authService.login(email, password);
 
       if (data.success && data.token) {
         localStorage.setItem("adminToken", data.token);

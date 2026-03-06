@@ -1,6 +1,8 @@
 "use client";
 
-import { Edit2, Plus, Search, Trash2 } from "lucide-react";
+import SearchInput from "@/components/ui/SearchInput";
+import { CompanyPayload, companyService } from "@/services/company.service";
+import { Edit2, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Company {
@@ -21,18 +23,15 @@ export default function CompaniesPage() {
   const [currentCompany, setCurrentCompany] = useState<Partial<Company> | null>(
     null,
   );
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CompanyPayload>({
     name: "",
     location: "",
     logo: "",
   });
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-
   const fetchCompanies = async () => {
     try {
-      const res = await fetch(`${apiUrl}/companies?limit=100`);
-      const data = await res.json();
+      const data = await companyService.getCompanies();
       if (data.success) {
         setCompanies(data.data);
       }
@@ -65,18 +64,11 @@ export default function CompaniesPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = currentCompany
-        ? `${apiUrl}/companies/${currentCompany.id}`
-        : `${apiUrl}/companies`;
-      const method = currentCompany ? "PUT" : "POST";
+      const res = currentCompany
+        ? await companyService.updateCompany(currentCompany.id!, formData)
+        : await companyService.createCompany(formData);
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (res.ok) {
+      if (res.success) {
         setIsModalOpen(false);
         fetchCompanies();
       }
@@ -88,10 +80,8 @@ export default function CompaniesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this company?")) return;
     try {
-      const res = await fetch(`${apiUrl}/companies/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
+      const res = await companyService.deleteCompany(id);
+      if (res.success) {
         fetchCompanies();
       }
     } catch (error) {
@@ -130,19 +120,12 @@ export default function CompaniesPage() {
 
       {/* Tools */}
       <div className="bg-surface border border-surface-border rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center shadow-sm">
-        <div className="relative w-full sm:w-96">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Search companies..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-background border border-surface-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors"
-          />
-        </div>
+        <SearchInput
+          placeholder="Search companies..."
+          value={search}
+          onChange={setSearch}
+          className="w-full sm:w-96"
+        />
       </div>
 
       {/* Table grid */}

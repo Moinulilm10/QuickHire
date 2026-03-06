@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Pagination from "@/components/ui/Pagination";
+import { categoryService } from "@/services/category.service";
 import { alertService } from "@/utils/alertService";
 import { Edit, List, Loader2, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -25,10 +26,8 @@ export default function CategoriesPage() {
   const fetchCategories = async (page: number) => {
     setLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-      const res = await fetch(`${apiUrl}/categories?page=${page}&limit=10`);
-      const data = await res.json();
+      const data = await categoryService.getCategories(page);
+
       if (data.success) {
         setCategories(data.data);
         setTotalPages(data.pagination.totalPages);
@@ -70,20 +69,10 @@ export default function CategoriesPage() {
 
     if (confirmed.isConfirmed) {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-        const token = localStorage.getItem("adminToken");
-        const res = await fetch(`${apiUrl}/categories/${category.id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const data = await categoryService.deleteCategory(category.id);
 
-        const data = await res.json();
         if (data.success) {
           alertService.success("Deleted!", "Category has been removed.");
-          // If deleting the last item on a page, fetch previous page
           const newPage =
             categories.length === 1 && currentPage > 1
               ? currentPage - 1
@@ -126,24 +115,13 @@ export default function CategoriesPage() {
     setErrorText("");
 
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-      const token = localStorage.getItem("adminToken");
-      const url = editingCategory
-        ? `${apiUrl}/categories/${editingCategory.id}`
-        : `${apiUrl}/categories`;
-      const method = editingCategory ? "PUT" : "POST";
+      const data = editingCategory
+        ? await categoryService.updateCategory(
+            editingCategory.id,
+            categoryName.trim(),
+          )
+        : await categoryService.createCategory(categoryName.trim());
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name: categoryName.trim() }),
-      });
-
-      const data = await res.json();
       if (data.success) {
         alertService.success(
           editingCategory ? "Updated!" : "Success!",

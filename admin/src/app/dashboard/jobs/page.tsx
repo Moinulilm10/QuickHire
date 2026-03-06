@@ -3,8 +3,9 @@
 import AddJobForm, { AddJobFormData } from "@/components/jobs/AddJobForm";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import Input from "@/components/ui/Input";
 import Pagination from "@/components/ui/Pagination";
+import SearchInput from "@/components/ui/SearchInput";
+import { jobService } from "@/services/job.service";
 import { alertService } from "@/utils/alertService";
 import {
   ArrowLeft,
@@ -12,7 +13,6 @@ import {
   FileText,
   MapPin,
   Plus,
-  Search,
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,16 +36,8 @@ export default function JobsPage() {
   const fetchJobs = async (page: number) => {
     setLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
-      const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${apiUrl}/jobs?page=${page}&limit=8`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const data = await jobService.getJobs(page);
 
-      const data = await res.json();
       if (data.success) {
         setJobs(data.jobs);
         setTotalPages(data.pagination.totalPages);
@@ -76,17 +68,8 @@ export default function JobsPage() {
 
     if (confirmed.isConfirmed) {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
-        const token = localStorage.getItem("adminToken");
-        const res = await fetch(`${apiUrl}/jobs/${job.id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const data = await jobService.deleteJob(job.id);
 
-        const data = await res.json();
         if (data.success) {
           alertService.success("Deleted!", "Job listing has been removed.");
           fetchJobs(currentPage);
@@ -102,29 +85,10 @@ export default function JobsPage() {
 
   const handleSaveJob = async (data: AddJobFormData) => {
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500/api";
-      const token = localStorage.getItem("adminToken");
+      const resData = selectedJob
+        ? await jobService.updateJob(selectedJob.id, data)
+        : await jobService.createJob(data);
 
-      const payload = {
-        ...data,
-      };
-
-      const url = selectedJob
-        ? `${apiUrl}/jobs/${selectedJob.id}`
-        : `${apiUrl}/jobs`;
-      const method = selectedJob ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const resData = await res.json();
       if (resData.success) {
         alertService.success(
           selectedJob ? "Updated!" : "Success!",
@@ -290,11 +254,10 @@ export default function JobsPage() {
 
           {/* Search */}
           <div className="max-w-md animate-fade-in-up">
-            <Input
+            <SearchInput
               placeholder="Search by title..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              icon={<Search size={16} />}
+              onChange={setSearch}
             />
           </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Pagination from "@/components/ui/Pagination";
+import { userService } from "@/services/user.service";
 import { alertService } from "@/utils/alertService";
 import { Loader2, Mail, Shield, Trash2, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,17 +25,7 @@ export default function UsersPage() {
   const fetchUsers = async (page: number) => {
     setLoading(true);
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-      const token = localStorage.getItem("adminToken");
-
-      const res = await fetch(`${apiUrl}/auth/users?page=${page}&limit=10`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
+      const data = await userService.getUsers(page);
 
       if (data.success) {
         setUsers(data.users);
@@ -72,18 +63,7 @@ export default function UsersPage() {
 
     if (isConfirmed.isConfirmed) {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-        const token = localStorage.getItem("adminToken");
-
-        const res = await fetch(`${apiUrl}/auth/users/${userId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
+        const data = await userService.deleteUser(userId);
 
         if (data.success) {
           alertService.success("Deleted!", "User has been deleted.");
