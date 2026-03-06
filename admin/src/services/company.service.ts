@@ -7,8 +7,13 @@ export interface CompanyPayload {
 }
 
 export const companyService = {
-  async getCompanies(limit = 100) {
-    return apiClient(`/companies?limit=${limit}`, { auth: false });
+  async getCompanies(page = 1, limit = 10, search = "") {
+    const query = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      ...(search ? { search } : {}),
+    });
+    return apiClient(`/companies?${query.toString()}`, { auth: false });
   },
 
   async createCompany(data: CompanyPayload) {

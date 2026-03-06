@@ -16,35 +16,51 @@ describe("companyService", () => {
   });
 
   describe("getCompanies", () => {
-    it("should GET /companies with limit param", async () => {
+    it("should GET /companies with page, limit, and search params", async () => {
       const mockResponse = {
         success: true,
         data: [{ id: 1, name: "Acme", location: "NYC" }],
+        pagination: { total: 1, totalPages: 1 },
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         json: async () => mockResponse,
       });
 
-      const result = await companyService.getCompanies(50);
+      const result = await companyService.getCompanies(2, 5, "acme");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/companies?limit=50`,
+        expect.stringContaining(`${mockApiUrl}/companies?`),
         expect.objectContaining({ method: "GET" }),
       );
+      const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+      expect(calledUrl).toContain("page=2");
+      expect(calledUrl).toContain("limit=5");
+      expect(calledUrl).toContain("search=acme");
       expect(result.data).toHaveLength(1);
     });
 
-    it("should default limit to 100", async () => {
+    it("should default to page 1, limit 10, no search", async () => {
       (global.fetch as jest.Mock).mockResolvedValue({
         json: async () => ({ success: true, data: [] }),
       });
 
       await companyService.getCompanies();
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/companies?limit=100`,
-        expect.anything(),
-      );
+      const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+      expect(calledUrl).toContain("page=1");
+      expect(calledUrl).toContain("limit=10");
+      expect(calledUrl).not.toContain("search=");
+    });
+
+    it("should omit search param when empty string", async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        json: async () => ({ success: true, data: [] }),
+      });
+
+      await companyService.getCompanies(1, 10, "");
+
+      const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+      expect(calledUrl).not.toContain("search");
     });
   });
 

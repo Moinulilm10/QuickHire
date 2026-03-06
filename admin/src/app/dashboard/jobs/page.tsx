@@ -11,52 +11,203 @@ import {
   ArrowLeft,
   Briefcase,
   FileText,
+  Loader2,
   MapPin,
   Plus,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, use, useReducer, useState, useTransition } from "react";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 const statusColors: Record<string, string> = {
   active: "bg-success/10 text-success",
   expired: "bg-danger/10 text-danger",
   draft: "bg-accent/10 text-accent",
 };
 
+interface JobsResponse {
+  success: boolean;
+  jobs: any[];
+  pagination: { total: number; totalPages: number };
+  message?: string;
+}
+
+// ─── Reducer ─────────────────────────────────────────────────────────────────
+interface JobsState {
+  search: string;
+  currentPage: number;
+  selectedJob: any | null;
+  showAddForm: boolean;
+}
+
+type JobsAction =
+  | { type: "SET_SEARCH"; payload: string }
+  | { type: "SET_PAGE"; payload: number }
+  | { type: "SELECT_JOB"; payload: any | null }
+  | { type: "TOGGLE_ADD_FORM"; payload: boolean }
+  | { type: "UPDATE_SELECTED_JOB"; payload: any };
+
+const initialJobsState: JobsState = {
+  search: "",
+  currentPage: 1,
+  selectedJob: null,
+  showAddForm: false,
+};
+
+function jobsReducer(state: JobsState, action: JobsAction): JobsState {
+  switch (action.type) {
+    case "SET_SEARCH":
+      return { ...state, search: action.payload };
+    case "SET_PAGE":
+      return { ...state, currentPage: action.payload };
+    case "SELECT_JOB":
+      return { ...state, selectedJob: action.payload };
+    case "TOGGLE_ADD_FORM":
+      return { ...state, showAddForm: action.payload };
+    case "UPDATE_SELECTED_JOB":
+      return { ...state, selectedJob: action.payload };
+    default:
+      return state;
+  }
+}
+
+// ─── Jobs List (uses use()) ──────────────────────────────────────────────────
+function JobsListContent({
+  dataPromise,
+  isPending,
+  state,
+  dispatch,
+  onDelete,
+}: {
+  dataPromise: Promise<JobsResponse>;
+  isPending: boolean;
+  state: JobsState;
+  dispatch: React.Dispatch<JobsAction>;
+  onDelete: (job: any) => void;
+}) {
+  const data = use(dataPromise);
+  const jobs = data.jobs || [];
+  const totalPages = data.pagination?.totalPages || 1;
+
+  return (
+    <>
+      {/* Job Cards Grid */}
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 transition-opacity duration-200"
+        style={{ opacity: isPending ? 0.6 : 1 }}
+      >
+        {jobs.map((job) => (
+          <Card
+            key={job.id}
+            hover
+            onClick={() => dispatch({ type: "SELECT_JOB", payload: job })}
+            className="animate-fade-in-up group"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0 overflow-hidden`}
+                style={{
+                  backgroundColor: job.logoUrl ? "transparent" : job.logoColor,
+                }}
+              >
+                {job.logo ? (
+                  <img
+                    src={job.logo}
+                    className="w-full h-full object-cover"
+                    alt={job.company?.name || "Company"}
+                  />
+                ) : (
+                  (job.company?.name || "C").charAt(0)
+                )}
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusColors[job.status] || "bg-surface-border text-foreground"}`}
+              >
+                {job.status}
+              </span>
+            </div>
+
+            <h3 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200">
+              {job.title}
+            </h3>
+            <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
+              <Briefcase size={12} /> {job.company?.name || "Company"}
+            </p>
+            <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
+              <MapPin size={12} /> {job.location}
+            </p>
+
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-surface-border">
+              <span className="text-[10px] text-text-muted">
+                {new Date(job.createdAt).toLocaleDateString()}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(job);
+                }}
+                className="text-text-muted hover:text-danger transition-all duration-200 cursor-pointer transform hover:scale-110"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {jobs.length === 0 && (
+        <div className="text-center py-16 animate-fade-in">
+          <p className="text-text-muted text-lg">No jobs found</p>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={state.currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) =>
+              dispatch({ type: "SET_PAGE", payload: page })
+            }
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Loading Skeleton ────────────────────────────────────────────────────────
+function JobsLoadingSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-surface rounded-2xl p-6 border border-surface-border animate-pulse h-48"
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalJobs, setTotalJobs] = useState(0);
-  const [search, setSearch] = useState("");
-  const [selectedJob, setSelectedJob] = useState<any | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [state, dispatch] = useReducer(jobsReducer, initialJobsState);
+  const [isPending, startTransition] = useTransition();
+  const [dataPromise, setDataPromise] = useState(() => jobService.getJobs(1));
 
-  const fetchJobs = async (page: number) => {
-    setLoading(true);
-    try {
-      const data = await jobService.getJobs(page);
-
-      if (data.success) {
-        setJobs(data.jobs);
-        setTotalPages(data.pagination.totalPages);
-        setTotalJobs(data.pagination.total);
-        setCurrentPage(page);
-      } else {
-        alertService.error("Error", data.message || "Could not fetch jobs");
-      }
-    } catch (error) {
-      console.error("Failed to fetch jobs:", error);
-      alertService.error("Error", "An error occurred while fetching jobs.");
-    } finally {
-      setLoading(false);
-    }
+  const refetch = (page?: number) => {
+    const p = page ?? state.currentPage;
+    startTransition(() => {
+      setDataPromise(jobService.getJobs(p));
+    });
   };
 
-  useEffect(() => {
-    fetchJobs(1);
-  }, []);
+  // Sync page changes with refetch
+  const handlePageChange = (page: number) => {
+    dispatch({ type: "SET_PAGE", payload: page });
+    refetch(page);
+  };
 
   const handleDelete = async (job: any) => {
     const confirmed = await alertService.confirm(
@@ -69,11 +220,11 @@ export default function JobsPage() {
     if (confirmed.isConfirmed) {
       try {
         const data = await jobService.deleteJob(job.id);
-
         if (data.success) {
           alertService.success("Deleted!", "Job listing has been removed.");
-          fetchJobs(currentPage);
-          if (selectedJob?.id === job.id) setSelectedJob(null);
+          refetch();
+          if (state.selectedJob?.id === job.id)
+            dispatch({ type: "SELECT_JOB", payload: null });
         } else {
           alertService.error("Error", data.message || "Failed to delete job");
         }
@@ -83,22 +234,23 @@ export default function JobsPage() {
     }
   };
 
-  const handleSaveJob = async (data: AddJobFormData) => {
+  const handleSaveJob = async (formData: AddJobFormData) => {
     try {
-      const resData = selectedJob
-        ? await jobService.updateJob(selectedJob.id, data)
-        : await jobService.createJob(data);
+      const resData = state.selectedJob
+        ? await jobService.updateJob(state.selectedJob.id, formData)
+        : await jobService.createJob(formData);
 
       if (resData.success) {
         alertService.success(
-          selectedJob ? "Updated!" : "Success!",
-          selectedJob
+          state.selectedJob ? "Updated!" : "Success!",
+          state.selectedJob
             ? "Job listing has been updated."
             : "New job listing has been added.",
         );
-        fetchJobs(currentPage);
-        setShowAddForm(false);
-        if (selectedJob) setSelectedJob(resData.data);
+        refetch();
+        dispatch({ type: "TOGGLE_ADD_FORM", payload: false });
+        if (state.selectedJob)
+          dispatch({ type: "UPDATE_SELECTED_JOB", payload: resData.data });
       } else {
         alertService.error("Error", resData.message || "Failed to save job");
       }
@@ -109,10 +261,10 @@ export default function JobsPage() {
 
   return (
     <>
-      {selectedJob ? (
+      {state.selectedJob ? (
         <div className="space-y-6 animate-fade-in-up">
           <button
-            onClick={() => setSelectedJob(null)}
+            onClick={() => dispatch({ type: "SELECT_JOB", payload: null })}
             className="flex items-center gap-2 text-sm text-text-muted hover:text-foreground transition-colors duration-200 cursor-pointer"
           >
             <ArrowLeft size={16} />
@@ -124,46 +276,46 @@ export default function JobsPage() {
               <div
                 className={`w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden`}
                 style={{
-                  backgroundColor: selectedJob.logo
+                  backgroundColor: state.selectedJob.logo
                     ? "transparent"
-                    : selectedJob.logoColor,
+                    : state.selectedJob.logoColor,
                 }}
               >
-                {selectedJob.logo ? (
+                {state.selectedJob.logo ? (
                   <img
-                    src={selectedJob.logo}
+                    src={state.selectedJob.logo}
                     className="w-full h-full object-cover"
-                    alt={selectedJob.company?.name || "Company"}
+                    alt={state.selectedJob.company?.name || "Company"}
                   />
                 ) : (
-                  (selectedJob.company?.name || "C").charAt(0)
+                  (state.selectedJob.company?.name || "C").charAt(0)
                 )}
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  {selectedJob.title}
+                  {state.selectedJob.title}
                 </h2>
                 <p className="text-text-muted text-sm">
-                  {selectedJob.company?.name || "Company"} •{" "}
-                  {selectedJob.location}
+                  {state.selectedJob.company?.name || "Company"} •{" "}
+                  {state.selectedJob.location}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-                    {selectedJob.type}
+                    {state.selectedJob.type}
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusColors[selectedJob.status]}`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusColors[state.selectedJob.status]}`}
                   >
-                    {selectedJob.status}
+                    {state.selectedJob.status}
                   </span>
-                  {selectedJob.salary && (
+                  {state.selectedJob.salary && (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-accent/10 text-accent">
-                      {selectedJob.salary}
+                      {state.selectedJob.salary}
                     </span>
                   )}
-                  {selectedJob.experience && (
+                  {state.selectedJob.experience && (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
-                      Exp: {selectedJob.experience}
+                      Exp: {state.selectedJob.experience}
                     </span>
                   )}
                 </div>
@@ -175,7 +327,7 @@ export default function JobsPage() {
                 Description
               </h3>
               <p className="text-sm text-text-muted leading-relaxed">
-                {selectedJob.description}
+                {state.selectedJob.description}
               </p>
             </div>
 
@@ -184,7 +336,7 @@ export default function JobsPage() {
                 Categories
               </h3>
               <div className="flex flex-wrap gap-2">
-                {(selectedJob.categories || []).map((cat: any) => {
+                {(state.selectedJob.categories || []).map((cat: any) => {
                   const name = typeof cat === "string" ? cat : cat.name;
                   return (
                     <span
@@ -198,15 +350,14 @@ export default function JobsPage() {
               </div>
             </div>
 
-            {/* PDF Viewer */}
-            {selectedJob.pdfUrl && (
+            {state.selectedJob.pdfUrl && (
               <div className="border-t border-surface-border pt-4 mb-6">
                 <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
                   <FileText size={16} /> Attached PDF
                 </h3>
                 <div className="w-full h-[500px] border border-surface-border rounded-lg overflow-hidden">
                   <iframe
-                    src={selectedJob.pdfUrl}
+                    src={state.selectedJob.pdfUrl}
                     className="w-full h-full"
                     title="Job PDF"
                   />
@@ -218,14 +369,16 @@ export default function JobsPage() {
               <Button
                 variant="outline"
                 icon={<Plus size={16} />}
-                onClick={() => setShowAddForm(true)}
+                onClick={() =>
+                  dispatch({ type: "TOGGLE_ADD_FORM", payload: true })
+                }
               >
                 Update Details
               </Button>
               <Button
                 variant="danger"
                 icon={<Trash2 size={16} />}
-                onClick={() => handleDelete(selectedJob)}
+                onClick={() => handleDelete(state.selectedJob)}
               >
                 Delete Job
               </Button>
@@ -240,133 +393,61 @@ export default function JobsPage() {
               <h1 className="text-2xl font-bold text-foreground">
                 Job Listings
               </h1>
-              <p className="text-text-muted text-sm mt-1">
-                {jobs.length} total jobs
-              </p>
+              <p className="text-text-muted text-sm mt-1">Manage all jobs</p>
             </div>
             <Button
               icon={<Plus size={16} />}
-              onClick={() => setShowAddForm(true)}
+              onClick={() =>
+                dispatch({ type: "TOGGLE_ADD_FORM", payload: true })
+              }
             >
               Add New Job
             </Button>
           </div>
 
           {/* Search */}
-          <div className="max-w-md animate-fade-in-up">
+          <div className="max-w-md animate-fade-in-up flex items-center gap-3">
             <SearchInput
               placeholder="Search by title..."
-              value={search}
-              onChange={setSearch}
+              value={state.search}
+              onChange={(val) => dispatch({ type: "SET_SEARCH", payload: val })}
+              className="flex-1"
             />
+            {isPending && (
+              <Loader2 size={18} className="animate-spin text-primary" />
+            )}
           </div>
 
-          {/* Job Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {loading
-              ? Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-surface rounded-2xl p-6 border border-surface-border animate-pulse h-48"
-                  />
-                ))
-              : jobs.map((job) => (
-                  <Card
-                    key={job.id}
-                    hover
-                    onClick={() => setSelectedJob(job)}
-                    className="animate-fade-in-up group"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0 overflow-hidden`}
-                        style={{
-                          backgroundColor: job.logoUrl
-                            ? "transparent"
-                            : job.logoColor,
-                        }}
-                      >
-                        {job.logo ? (
-                          <img
-                            src={job.logo}
-                            className="w-full h-full object-cover"
-                            alt={job.company?.name || "Company"}
-                          />
-                        ) : (
-                          (job.company?.name || "C").charAt(0)
-                        )}
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${statusColors[job.status] || "bg-surface-border text-foreground"}`}
-                      >
-                        {job.status}
-                      </span>
-                    </div>
-
-                    <h3 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200">
-                      {job.title}
-                    </h3>
-                    <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
-                      <Briefcase size={12} /> {job.company?.name || "Company"}
-                    </p>
-                    <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
-                      <MapPin size={12} /> {job.location}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-surface-border">
-                      <span className="text-[10px] text-text-muted">
-                        {new Date(job.createdAt).toLocaleDateString()}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(job);
-                        }}
-                        className="text-text-muted hover:text-danger transition-all duration-200 cursor-pointer transform hover:scale-110"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </Card>
-                ))}
-          </div>
-
-          {jobs.length === 0 && !loading && (
-            <div className="text-center py-16 animate-fade-in">
-              <p className="text-text-muted text-lg">No jobs found</p>
-            </div>
-          )}
-
-          {!loading && totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => fetchJobs(page)}
-              />
-            </div>
-          )}
+          <Suspense fallback={<JobsLoadingSkeleton />}>
+            <JobsListContent
+              dataPromise={dataPromise}
+              isPending={isPending}
+              state={state}
+              dispatch={dispatch}
+              onDelete={handleDelete}
+            />
+          </Suspense>
         </div>
       )}
 
       {/* Add/Edit Job Modal */}
-      {showAddForm && (
+      {state.showAddForm && (
         <AddJobForm
           onSubmit={handleSaveJob}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={() => dispatch({ type: "TOGGLE_ADD_FORM", payload: false })}
           initialData={
-            selectedJob
+            state.selectedJob
               ? {
-                  title: selectedJob.title,
-                  company: selectedJob.company?.name || "",
-                  location: selectedJob.location,
-                  type: selectedJob.type,
-                  description: selectedJob.description,
-                  logo: selectedJob.logo || null,
-                  experience: selectedJob.experience || "",
-                  salary: selectedJob.salary || "",
-                  categories: (selectedJob.categories || []).map((cat: any) =>
-                    typeof cat === "string" ? cat : cat.name,
+                  title: state.selectedJob.title,
+                  company: state.selectedJob.company?.name || "",
+                  location: state.selectedJob.location,
+                  type: state.selectedJob.type,
+                  description: state.selectedJob.description,
+                  logo: state.selectedJob.logo || null,
+                  experience: state.selectedJob.experience || "",
+                  salary: state.selectedJob.salary || "",
+                  categories: (state.selectedJob.categories || []).map(
+                    (cat: any) => (typeof cat === "string" ? cat : cat.name),
                   ),
                 }
               : undefined

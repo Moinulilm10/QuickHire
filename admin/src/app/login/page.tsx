@@ -5,39 +5,87 @@ import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
 import { Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useReducer } from "react";
 
+// ─── Reducer ─────────────────────────────────────────────────────────────────
+interface LoginState {
+  email: string;
+  password: string;
+  error: string;
+  loading: boolean;
+}
+
+type LoginAction =
+  | { type: "SET_EMAIL"; payload: string }
+  | { type: "SET_PASSWORD"; payload: string }
+  | { type: "SET_ERROR"; payload: string }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SUBMIT_START" }
+  | { type: "SUBMIT_ERROR"; payload: string }
+  | { type: "SUBMIT_END" };
+
+const initialLoginState: LoginState = {
+  email: "",
+  password: "",
+  error: "",
+  loading: false,
+};
+
+function loginReducer(state: LoginState, action: LoginAction): LoginState {
+  switch (action.type) {
+    case "SET_EMAIL":
+      return { ...state, email: action.payload };
+    case "SET_PASSWORD":
+      return { ...state, password: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "SUBMIT_START":
+      return { ...state, loading: true, error: "" };
+    case "SUBMIT_ERROR":
+      return { ...state, loading: false, error: action.payload };
+    case "SUBMIT_END":
+      return { ...state, loading: false };
+    default:
+      return state;
+  }
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(loginReducer, initialLoginState);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
-    if (!email || !password) {
-      setError("Please fill in all fields");
+    if (!state.email || !state.password) {
+      dispatch({ type: "SET_ERROR", payload: "Please fill in all fields" });
       return;
     }
 
-    setLoading(true);
+    dispatch({ type: "SUBMIT_START" });
     try {
-      const data = await authService.login(email, password);
+      const data = await authService.login(state.email, state.password);
 
       if (data.success && data.token) {
         localStorage.setItem("adminToken", data.token);
         router.push("/dashboard");
       } else {
-        setError(data.message || "Invalid credentials");
+        dispatch({
+          type: "SUBMIT_ERROR",
+          payload: data.message || "Invalid credentials",
+        });
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Unable to connect to the server. Please try again.");
+      dispatch({
+        type: "SUBMIT_ERROR",
+        payload: "Unable to connect to the server. Please try again.",
+      });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SUBMIT_END" });
     }
   };
 
@@ -61,8 +109,10 @@ export default function LoginPage() {
               label="Email or Username"
               type="email"
               placeholder="admin@quickhire.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={state.email}
+              onChange={(e) =>
+                dispatch({ type: "SET_EMAIL", payload: e.target.value })
+              }
               icon={<Mail size={18} />}
             />
 
@@ -70,18 +120,20 @@ export default function LoginPage() {
               label="Password"
               type="password"
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={state.password}
+              onChange={(e) =>
+                dispatch({ type: "SET_PASSWORD", payload: e.target.value })
+              }
               icon={<Lock size={18} />}
             />
 
-            {error && (
+            {state.error && (
               <p className="text-danger text-sm font-medium animate-fade-in">
-                {error}
+                {state.error}
               </p>
             )}
 
-            <Button type="submit" className="w-full" loading={loading}>
+            <Button type="submit" className="w-full" loading={state.loading}>
               Sign In
             </Button>
           </form>

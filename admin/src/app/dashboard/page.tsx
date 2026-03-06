@@ -2,7 +2,6 @@
 
 import Card from "@/components/ui/Card";
 import { dashboardService } from "@/services/dashboard.service";
-import { alertService } from "@/utils/alertService";
 import {
   Briefcase,
   Clock,
@@ -10,7 +9,7 @@ import {
   PlusCircle,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, use, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -23,6 +22,7 @@ import {
   YAxis,
 } from "recharts";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 interface StatsData {
   totalJobs: number;
   activeJobs: number;
@@ -35,39 +35,23 @@ interface ChartData {
   jobsOverTime: { month: string; jobs: number }[];
 }
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [charts, setCharts] = useState<ChartData | null>(null);
-  const [loading, setLoading] = useState(true);
+interface DashboardResponse {
+  success: boolean;
+  stats?: StatsData;
+  charts?: ChartData;
+  message?: string;
+}
 
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      const data = await dashboardService.getStats();
+// ─── Data Content (uses use()) ───────────────────────────────────────────────
+function DashboardDataContent({
+  dataPromise,
+}: {
+  dataPromise: Promise<DashboardResponse>;
+}) {
+  const data = use(dataPromise);
 
-      if (data.success) {
-        setStats(data.stats);
-        setCharts(data.charts);
-      } else {
-        alertService.error(
-          "Error",
-          data.message || "Could not fetch dashboard stats",
-        );
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard stats:", error);
-      alertService.error(
-        "Error",
-        "An error occurred while fetching dashboard statistics.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  const stats = data.stats;
+  const charts = data.charts;
 
   const statsCards = [
     {
@@ -100,26 +84,8 @@ export default function DashboardPage() {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin text-brand-primary w-12 h-12" />
-        <span className="ml-4 text-text-muted font-medium">
-          Loading statistics...
-        </span>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-text-muted text-sm mt-1">
-          Real-time overview of your job management system
-        </p>
-      </div>
-
+    <>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {statsCards.map((stat, i) => (
@@ -230,6 +196,38 @@ export default function DashboardPage() {
           </div>
         </Card>
       </div>
+    </>
+  );
+}
+
+// ─── Loading Skeleton ────────────────────────────────────────────────────────
+function DashboardLoadingSkeleton() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="animate-spin text-brand-primary w-12 h-12" />
+      <span className="ml-4 text-text-muted font-medium">
+        Loading statistics...
+      </span>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const [dataPromise] = useState(() => dashboardService.getStats());
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="">
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-text-muted text-sm mt-1">
+          Real-time overview of your job management system
+        </p>
+      </div>
+
+      <Suspense fallback={<DashboardLoadingSkeleton />}>
+        <DashboardDataContent dataPromise={dataPromise} />
+      </Suspense>
     </div>
   );
 }
