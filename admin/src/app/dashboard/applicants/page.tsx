@@ -12,7 +12,7 @@ import {
   use,
   useEffect,
   useReducer,
-  useRef,
+  useState,
   useTransition,
 } from "react";
 import toast from "react-hot-toast";
@@ -338,7 +338,14 @@ export default function ApplicantsPage() {
     applicantsInitialState,
   );
   const [isPending, startTransition] = useTransition();
-  const promiseRef = useRef(fetchApplications());
+  const [dataPromise, setDataPromise] = useState<{
+    applications: any[];
+  } | null>(null);
+
+  // Initialize data on client mount to avoid hydration mismatch
+  useEffect(() => {
+    setDataPromise(fetchApplications());
+  }, []);
 
   // Debounce search term
   useEffect(() => {
@@ -351,15 +358,25 @@ export default function ApplicantsPage() {
 
   const refreshData = () => {
     startTransition(() => {
-      promiseRef.current = fetchApplications();
+      setDataPromise(fetchApplications());
     });
   };
 
+  if (!dataPromise) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <ApplicantsSkeleton />
+      </div>
+    );
+  }
+
   return (
-    <div className={isPending ? "opacity-60 transition-opacity" : ""}>
+    <div
+      className={`p-4 sm:p-6 lg:p-8 ${isPending ? "opacity-60 transition-opacity" : ""}`}
+    >
       <Suspense fallback={<ApplicantsSkeleton />}>
         <ApplicantsContent
-          dataPromise={promiseRef.current}
+          dataPromise={dataPromise as any}
           state={state}
           dispatch={dispatch}
           refreshData={refreshData}
