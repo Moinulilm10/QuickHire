@@ -1,4 +1,5 @@
 const jobModel = require("../models/job.model");
+const prisma = require("../config/prisma");
 
 exports.getAllJobs = async (req, res, next) => {
   try {

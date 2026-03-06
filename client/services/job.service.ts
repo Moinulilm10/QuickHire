@@ -28,8 +28,21 @@ export const jobService = {
   /**
    * Fetch a complete, unomitted job entity directly via UUID or ID for Details Page mapping.
    */
-  async getJobDetails(identifier: string) {
-    const res = await fetch(`${apiUrl}/jobs/${identifier}`);
+  /**
+   * Fetch a complete, unomitted job entity directly via UUID or ID for Details Page mapping.
+   */
+  async getJobDetails(identifier: string, token?: string) {
+    const headers: any = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${apiUrl}/jobs/${identifier}`, {
+      headers,
+    });
     const data = await res.json();
     if (data.success) {
       return data.data;

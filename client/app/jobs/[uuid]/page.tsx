@@ -3,6 +3,7 @@
 import ApplyModal from "@/components/jobs/ApplyModal";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
+import { useAuth } from "@/context/AuthContext";
 import {
   jobDetailsInitialState,
   jobDetailsReducer,
@@ -21,39 +22,69 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, use, useReducer, useRef } from "react";
+import { useEffect, useReducer, useState } from "react";
 
-// ─── Data Fetcher ────────────────────────────────────────
-function fetchJobDetails(
-  uuid: string,
-): Promise<{ job: any; error: string | null }> {
-  return jobService
-    .getJobDetails(uuid)
-    .then((data) => ({ job: data, error: null }))
-    .catch((err: any) => ({
-      job: null,
-      error: err.message || "Something went wrong.",
-    }));
+// ─── Skeleton ────────────────────────────────────────────
+function JobDetailsSkeleton() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
+    </div>
+  );
 }
 
-// ─── Inner Content ───────────────────────────────────────
-function JobDetailsContent({
-  dataPromise,
-  isApplyModalOpen,
-  onApplyClick,
-  onModalClose,
+// ─── Page Component ──────────────────────────────────────
+export default function JobDetailsPage({
+  params,
 }: {
-  dataPromise: Promise<{ job: any; error: string | null }>;
-  isApplyModalOpen: boolean;
-  onApplyClick: () => void;
-  onModalClose: () => void;
+  params: Promise<{ uuid: string }>;
 }) {
-  const { job, error } = use(dataPromise);
+  const { user, token, isLoaded: isAuthLoaded } = useAuth();
+  const [uuid, setUuid] = useState<string | null>(null);
+  const [job, setJob] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [state, dispatch] = useReducer(
+    jobDetailsReducer,
+    jobDetailsInitialState,
+  );
+
+  // Unwrap params
+  useEffect(() => {
+    params.then((p) => setUuid(p.uuid));
+  }, [params]);
+
+  // Fetch job details when uuid is available AND auth is loaded
+  useEffect(() => {
+    if (!uuid || !isAuthLoaded) return;
+
+    const fetchDetails = async () => {
+      try {
+        setLoading(true);
+        const data = await jobService.getJobDetails(uuid, token || undefined);
+        setJob(data);
+        setError(null);
+      } catch (err: any) {
+        console.error("Failed to fetch job details:", err);
+        setError(err.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetails();
+  }, [uuid, isAuthLoaded, token]);
+
+  if (loading || !uuid) {
+    return <JobDetailsSkeleton />;
+  }
 
   if (error || !job) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <h2 className="text-2xl font-bold text-text-dark mb-4">
+        <Navbar />
+        <h2 className="text-2xl font-bold text-text-dark mb-4 mt-20">
           Job Not Found
         </h2>
         <p className="text-text-muted mb-8">
@@ -65,6 +96,9 @@ function JobDetailsContent({
         >
           Back to all jobs
         </Link>
+        <div className="mt-auto w-full">
+          <Footer />
+        </div>
       </div>
     );
   }
@@ -150,7 +184,9 @@ function JobDetailsContent({
                   </Link>
                 ) : (
                   <button
-                    onClick={onApplyClick}
+                    onClick={() =>
+                      dispatch({ type: "SET_MODAL_OPEN", payload: true })
+                    }
                     className="w-full md:w-auto bg-brand-primary text-white font-bold px-8 py-4 rounded-md hover:bg-brand-primary-hover hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
                   >
                     Apply for this job
@@ -287,8 +323,8 @@ function JobDetailsContent({
 
       {job && (
         <ApplyModal
-          isOpen={isApplyModalOpen}
-          onClose={onModalClose}
+          isOpen={state.isApplyModalOpen}
+          onClose={() => dispatch({ type: "SET_MODAL_OPEN", payload: false })}
           jobId={job.id}
           companyId={job.companyId}
           jobTitle={job.title}
@@ -297,41 +333,5 @@ function JobDetailsContent({
 
       <Footer />
     </div>
-  );
-}
-
-// ─── Skeleton ────────────────────────────────────────────
-function JobDetailsSkeleton() {
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
-    </div>
-  );
-}
-
-// ─── Page Component ──────────────────────────────────────
-export default function JobDetailsPage({
-  params,
-}: {
-  params: Promise<{ uuid: string }>;
-}) {
-  const { uuid } = use(params);
-  const [state, dispatch] = useReducer(
-    jobDetailsReducer,
-    jobDetailsInitialState,
-  );
-  const promiseRef = useRef(fetchJobDetails(uuid));
-
-  return (
-    <Suspense fallback={<JobDetailsSkeleton />}>
-      <JobDetailsContent
-        dataPromise={promiseRef.current}
-        isApplyModalOpen={state.isApplyModalOpen}
-        onApplyClick={() => dispatch({ type: "SET_MODAL_OPEN", payload: true })}
-        onModalClose={() =>
-          dispatch({ type: "SET_MODAL_OPEN", payload: false })
-        }
-      />
-    </Suspense>
   );
 }
