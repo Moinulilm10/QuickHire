@@ -1,5 +1,6 @@
 export interface Job {
   id: string;
+  uuid?: string;
   title: string;
   company: string;
   location: string;

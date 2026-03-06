@@ -2,6 +2,7 @@
 
 import {
   Briefcase,
+  Building2,
   LayoutDashboard,
   List,
   LogOut,
@@ -17,6 +18,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
   { label: "Categories", href: "/dashboard/categories", icon: List },
+  { label: "Companies", href: "/dashboard/companies", icon: Building2 },
   { label: "Users", href: "/dashboard/users", icon: Users },
 ];
 
