@@ -3,6 +3,7 @@
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
 import { navbarInitialState, navbarReducer } from "@/reducers/navbarReducer";
+import { getImageUrl } from "@/utils/urlUtils";
 import { ChevronDown, LogOut, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -83,8 +84,16 @@ export default function Navbar() {
                     onClick={() => dispatch({ type: "TOGGLE_DROPDOWN" })}
                     className="flex items-center gap-2 py-2 px-3 rounded-full hover:bg-surface-muted transition-colors duration-200 cursor-pointer text-text-dark font-medium border border-surface-border"
                   >
-                    <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold">
-                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold overflow-hidden border border-brand-primary/20">
+                      {user.picture ? (
+                        <img
+                          src={getImageUrl(user.picture)!}
+                          alt={user.name!}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        user.name?.charAt(0).toUpperCase() || "U"
+                      )}
                     </div>
                     <span>{user.name}</span>
                     <ChevronDown
@@ -224,8 +233,16 @@ export default function Navbar() {
               {isLoaded && user ? (
                 <>
                   <div className="flex items-center gap-3 px-2 py-2">
-                    <div className="w-10 h-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-lg">
-                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    <div className="w-10 h-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-lg overflow-hidden border border-brand-primary/20">
+                      {user.picture ? (
+                        <img
+                          src={getImageUrl(user.picture)!}
+                          alt={user.name!}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        user.name?.charAt(0).toUpperCase() || "U"
+                      )}
                     </div>
                     <div>
                       <p className="font-bold text-text-dark">{user.name}</p>

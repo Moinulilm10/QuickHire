@@ -8,6 +8,7 @@ class AuthModel {
         password,
         name,
         authProvider,
+        picture: null,
       },
     });
   }
@@ -27,6 +28,7 @@ class AuthModel {
         email: true,
         name: true,
         role: true,
+        picture: true,
         createdAt: true,
       },
     });
@@ -42,6 +44,7 @@ class AuthModel {
         email: true,
         name: true,
         role: true,
+        picture: true,
         createdAt: true,
         authProvider: true,
       },
@@ -62,6 +65,13 @@ class AuthModel {
   static async deleteUserById(id) {
     return prisma.user.delete({
       where: { id },
+    });
+  }
+
+  static async updateUser(id, data) {
+    return prisma.user.update({
+      where: { id },
+      data,
     });
   }
 }

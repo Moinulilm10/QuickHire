@@ -56,6 +56,7 @@ exports.signup = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        picture: user.picture,
       },
     });
   } catch (error) {
@@ -126,6 +127,7 @@ exports.login = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        picture: user.picture,
       },
     });
   } catch (error) {
@@ -138,7 +140,7 @@ exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const user = await AuthModel.findUserById(userId);
+    const user = await AuthModel.findUserById(parseInt(userId));
 
     if (!user) {
       return res
@@ -231,6 +233,7 @@ exports.googleAuth = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        picture: user.picture,
         authProvider: user.authProvider,
       },
     });
@@ -274,7 +277,7 @@ exports.getAllUsers = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const adminId = req.user.userId;
+    const adminId = parseInt(req.user.userId);
 
     // Verify requester is an admin
     if (req.user.role !== "ADMIN") {
@@ -319,6 +322,45 @@ exports.deleteUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Delete User Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = parseInt(req.user.userId);
+    const { name } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+
+    if (req.file) {
+      updateData.picture = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No data provided for update",
+      });
+    }
+
+    const updatedUser = await AuthModel.updateUser(userId, updateData);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser.id,
+        uuid: updatedUser.uuid,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        picture: updatedUser.picture,
+      },
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

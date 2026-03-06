@@ -6,6 +6,7 @@ export interface UserData {
   email: string;
   role: string;
   authProvider: string;
+  picture: string | null;
   createdAt: string;
 }
 

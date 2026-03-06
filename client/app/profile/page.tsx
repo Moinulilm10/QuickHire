@@ -6,9 +6,11 @@ import { useAuth } from "@/context/AuthContext";
 import { profileInitialState, profileReducer } from "@/reducers/profileReducer";
 import { applicationService } from "@/services/application.service";
 import { alertService } from "@/utils/alertService";
+import { getImageUrl } from "@/utils/urlUtils";
 import {
   Briefcase,
   Calendar,
+  Camera,
   ExternalLink,
   FileText,
   Loader2,
@@ -19,13 +21,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useReducer } from "react";
+import { Suspense, useEffect, useReducer, useRef } from "react";
 
 function ProfileContent() {
-  const { user, token, isLoaded, logout } = useAuth();
+  const { user, token, isLoaded, logout, login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [state, dispatch] = useReducer(profileReducer, profileInitialState);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUpdating, setIsUpdating] = useReducer((s: any) => !s, false);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -94,6 +98,55 @@ function ProfileContent() {
     }
   };
 
+  const handlePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alertService.error("File too large", "Please select an image under 2MB.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("picture", file);
+
+    try {
+      dispatch({ type: "SET_LOADING", payload: true });
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+
+      const res = await fetch(`${apiUrl}/auth/profile`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alertService.success(
+          "Success",
+          "Profile picture updated successfully!",
+        );
+        login(token as string, data.user);
+        dispatch({ type: "FETCH_SUCCESS", payload: data.user });
+      } else {
+        alertService.error("Error", data.message || "Failed to update picture");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alertService.error("Error", "An error occurred while uploading.");
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  };
+
   const handleDeleteAccount = () => {
     alertService
       .confirm(
@@ -114,7 +167,7 @@ function ProfileContent() {
       });
   };
 
-  if (!isLoaded || state.loading) {
+  if (!isLoaded || state.loading || !state.profileData) {
     return (
       <main className="min-h-screen pt-32 pb-12 flex items-center justify-center bg-surface-muted">
         <Loader2 className="animate-spin text-brand-primary w-12 h-12" />
@@ -136,9 +189,42 @@ function ProfileContent() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-white opacity-5 rounded-full translate-y-1/3 -translate-x-1/4"></div>
 
-          <div className="w-24 h-24 rounded-full bg-white text-brand-primary flex items-center justify-center text-4xl font-bold shadow-lg z-10 shrink-0">
-            {state.profileData.name.charAt(0).toUpperCase()}
+          <div className="relative group overflow-hidden">
+            <div
+              className={`w-24 h-24 rounded-full bg-white text-brand-primary flex items-center justify-center text-4xl font-bold shadow-lg z-10 shrink-0 overflow-hidden border-4 border-white/20 transition-transform duration-300 ${state.loading ? "opacity-50" : "group-hover:scale-105"}`}
+            >
+              {state.profileData.picture ? (
+                <img
+                  src={getImageUrl(state.profileData.picture)!}
+                  alt={state.profileData.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                state.profileData.name.charAt(0).toUpperCase()
+              )}
+            </div>
+
+            <button
+              onClick={handlePictureClick}
+              disabled={state.loading}
+              className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full cursor-pointer z-20"
+              title="Change Profile Picture"
+            >
+              <Camera
+                size={24}
+                className="transform group-hover:scale-110 transition-transform"
+              />
+            </button>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
           </div>
+
           <div className="text-center md:text-left z-10">
             <h1 className="text-3xl font-bold">{state.profileData.name}</h1>
             <p className="text-white/80 mt-1 text-lg flex items-center justify-center md:justify-start gap-2 capitalize font-medium">

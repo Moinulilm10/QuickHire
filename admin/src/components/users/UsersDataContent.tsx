@@ -7,6 +7,7 @@ import type {
   UsersResponse,
   UsersState,
 } from "@/reducers/users.reducer";
+import { getImageUrl } from "@/utils/urlUtils";
 import { Loader2, Mail, Shield, Trash2, User as UserIcon } from "lucide-react";
 import { use } from "react";
 
@@ -70,8 +71,16 @@ export function UsersDataContent({
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-sm shrink-0 border border-brand-primary/20 group-hover:scale-105 transition-transform duration-200">
-                          {user.name.charAt(0).toUpperCase()}
+                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-sm shrink-0 border border-brand-primary/20 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+                          {user.picture ? (
+                            <img
+                              src={getImageUrl(user.picture)!}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            user.name.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div>
                           <div className="font-semibold text-foreground group-hover:text-brand-primary transition-colors">
