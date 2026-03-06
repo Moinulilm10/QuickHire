@@ -1,3 +1,4 @@
+import { categoryService } from "@/services/category.service";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import ExploreByCategory from "../ExploreByCategory";
@@ -16,6 +17,9 @@ jest.mock("@/components/ui/CategoryCard", () => ({
   ),
 }));
 
+// Mock the categoryService
+jest.mock("@/services/category.service");
+
 // Mock IntersectionObserver
 const mockIntersectionObserver = jest.fn();
 mockIntersectionObserver.mockReturnValue({
@@ -32,9 +36,7 @@ describe("ExploreByCategory Component", () => {
   ];
 
   beforeEach(() => {
-    // Clear mock calls and reset fetch mock before each test
     jest.clearAllMocks();
-    global.fetch = jest.fn() as jest.Mock;
   });
 
   afterAll(() => {
@@ -42,33 +44,24 @@ describe("ExploreByCategory Component", () => {
   });
 
   it("renders the header and 'Show all Categories' link correctly", async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      json: jest.fn().mockResolvedValue({ success: true, data: [] }),
-    });
+    (categoryService.getTopCategories as jest.Mock).mockResolvedValue([]);
 
     render(<ExploreByCategory />);
 
-    expect(screen.getByText(/Explore by/i)).toBeInTheDocument();
-    expect(screen.getByText(/category/i)).toBeInTheDocument();
-    expect(screen.getByText("Show all Categories")).toBeInTheDocument();
-    expect(
-      screen.getByText("Show all Categories").closest("a"),
-    ).toHaveAttribute("href", "/categories");
+    await waitFor(() => {
+      expect(screen.getByText(/Explore by/i)).toBeInTheDocument();
+      expect(screen.getByText(/category/i)).toBeInTheDocument();
+      expect(screen.getByText("Show all Categories")).toBeInTheDocument();
+      expect(
+        screen.getByText("Show all Categories").closest("a"),
+      ).toHaveAttribute("href", "/categories");
+    });
   });
 
   it("displays loading skeletons while fetching data", async () => {
     // Delay the fetch resolution to ensure loading state is rendered
-    (global.fetch as jest.Mock).mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                json: () => Promise.resolve({ success: true, data: [] }),
-              }),
-            100,
-          ),
-        ),
+    (categoryService.getTopCategories as jest.Mock).mockImplementation(
+      () => new Promise(() => {}), // Never resolves
     );
 
     const { container } = render(<ExploreByCategory />);
@@ -79,12 +72,9 @@ describe("ExploreByCategory Component", () => {
   });
 
   it("successfully fetches and renders categories", async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      json: jest.fn().mockResolvedValue({
-        success: true,
-        data: mockCategories,
-      }),
-    });
+    (categoryService.getTopCategories as jest.Mock).mockResolvedValue(
+      mockCategories,
+    );
 
     render(<ExploreByCategory />);
 
@@ -102,11 +92,13 @@ describe("ExploreByCategory Component", () => {
   });
 
   it("handles fetch errors gracefully", async () => {
-    // Mock fetch to reject with an error
+    // Mock categoryService to reject with an error
     const consoleSpy = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
-    (global.fetch as jest.Mock).mockRejectedValue(new Error("API Failure"));
+    (categoryService.getTopCategories as jest.Mock).mockRejectedValue(
+      new Error("API Failure"),
+    );
 
     render(<ExploreByCategory />);
 

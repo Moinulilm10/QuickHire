@@ -61,6 +61,7 @@ describe("CompaniesPage", () => {
     (companyService.getAllCompanies as jest.Mock).mockResolvedValue({
       success: true,
       data: mockCompanies,
+      pagination: { totalPages: 1, total: 2 },
     });
 
     render(<CompaniesPage />);
@@ -78,6 +79,7 @@ describe("CompaniesPage", () => {
     (companyService.getAllCompanies as jest.Mock).mockResolvedValue({
       success: true,
       data: [],
+      pagination: { totalPages: 1, total: 0 },
     });
 
     render(<CompaniesPage />);

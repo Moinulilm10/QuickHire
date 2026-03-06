@@ -3,71 +3,189 @@
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Pagination from "@/components/ui/Pagination";
+import {
+  companiesInitialState,
+  companiesReducer,
+  Company,
+} from "@/reducers/companiesReducer";
 import { companyService } from "@/services/company.service";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  Suspense,
+  use,
+  useEffect,
+  useReducer,
+  useRef,
+  useTransition,
+} from "react";
 
-interface Company {
-  id: number;
-  uuid: string;
-  name: string;
-  location: string;
-  logo: string | null;
-  jobs: any[];
+const companiesPerPage = 8;
+
+// ─── Data Fetcher ────────────────────────────────────────
+function fetchCompanies(
+  page: number,
+  search: string,
+): Promise<{
+  companies: Company[];
+  totalPages: number;
+  totalCompanies: number;
+}> {
+  return companyService
+    .getAllCompanies(page, companiesPerPage, search)
+    .then((res) => ({
+      companies: res.data,
+      totalPages: res.pagination?.totalPages || 1,
+      totalCompanies: res.pagination?.total || 0,
+    }))
+    .catch((error) => {
+      console.error("Failed to fetch companies:", error);
+      return { companies: [], totalPages: 1, totalCompanies: 0 };
+    });
 }
 
-export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCompanies, setTotalCompanies] = useState(0);
-  const companiesPerPage = 8;
+// ─── Inner Content ───────────────────────────────────────
+function CompaniesContent({
+  dataPromise,
+  currentPage,
+  onPageChange,
+}: {
+  dataPromise: Promise<{
+    companies: Company[];
+    totalPages: number;
+    totalCompanies: number;
+  }>;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}) {
+  const data = use(dataPromise);
+  const { companies, totalPages, totalCompanies } = data;
 
-  // Debounce search term to prevent excessive API calls
+  return (
+    <>
+      <div className="mb-8 flex justify-between items-center text-text-dark font-medium">
+        <h2 className="text-xl">
+          All Companies{" "}
+          <span className="text-text-muted text-sm ml-2">
+            ({totalCompanies})
+          </span>
+        </h2>
+      </div>
+
+      {companies.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {companies.map((company, index) => (
+              <Link
+                key={company.id}
+                href={`/companies/${company.uuid}`}
+                className="block group"
+              >
+                <div
+                  className="bg-white border border-surface-border rounded-xl p-6 hover:shadow-card hover:border-brand-primary transition-all duration-300 animate-fade-in-up h-full flex flex-col items-center text-center"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="w-20 h-20 rounded-2xl bg-surface-light border border-surface-border flex items-center justify-center overflow-hidden mb-4 group-hover:scale-105 transition-transform duration-300">
+                    {company.logo ? (
+                      <Image
+                        src={company.logo}
+                        alt={company.name}
+                        width={48}
+                        height={48}
+                        className="object-contain"
+                      />
+                    ) : (
+                      <span className="text-brand-primary font-bold text-2xl">
+                        {company.name.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-bold text-text-dark mb-1 group-hover:text-brand-primary transition-colors">
+                    {company.name}
+                  </h3>
+                  <p className="text-sm text-text-muted mb-4">
+                    {company.location}
+                  </p>
+                  <span className="mt-auto px-4 py-1.5 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-semibold">
+                    {company.jobs?.length || 0} Jobs Available
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-12 pt-8 border-t border-surface-border flex justify-center">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-20 bg-surface rounded-xl border border-surface-border">
+          <Search size={48} className="mx-auto text-text-light mb-4" />
+          <h3 className="text-xl font-bold text-text-dark mb-2">
+            No Companies Found
+          </h3>
+          <p className="text-text-muted">
+            We could not find any companies matching your search. Try different
+            keywords.
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Skeleton ────────────────────────────────────────────
+function CompaniesSkeleton() {
+  return (
+    <>
+      <div className="mb-8 h-7 w-48 bg-surface-muted animate-pulse rounded" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-[280px] bg-white/50 animate-pulse rounded-xl border border-surface-border shadow-sm"
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ─── Page Component ──────────────────────────────────────
+export default function CompaniesPage() {
+  const [state, dispatch] = useReducer(companiesReducer, companiesInitialState);
+  const [isPending, startTransition] = useTransition();
+  const promiseRef = useRef(fetchCompanies(1, ""));
+
+  // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 400); // 400ms delay
+      dispatch({ type: "SET_DEBOUNCED_SEARCH", payload: state.searchTerm });
+    }, 400);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [state.searchTerm]);
 
-  // Fetch companies whenever page or debounced search changes
+  // Re-fetch when page or debounced search changes
   useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        setLoading(true);
-        // Server-side pagination & search
-        const res = await companyService.getAllCompanies(
-          currentPage,
-          companiesPerPage,
-          debouncedSearch,
-        );
+    startTransition(() => {
+      promiseRef.current = fetchCompanies(
+        state.currentPage,
+        state.debouncedSearch,
+      );
+    });
+  }, [state.currentPage, state.debouncedSearch]);
 
-        if (res.success) {
-          setCompanies(res.data);
-          setTotalPages(res.pagination?.totalPages || 1);
-          setTotalCompanies(res.pagination?.total || 0);
-        }
-      } catch (error) {
-        console.error("Failed to fetch companies:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCompanies();
-  }, [currentPage, debouncedSearch]);
-
-  // Reset to page 1 when search term changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch]);
+  const handlePageChange = (page: number) => {
+    dispatch({ type: "SET_PAGE", payload: page });
+  };
 
   return (
     <div className="min-h-screen flex flex-col pt-[72px] bg-background">
@@ -95,8 +213,10 @@ export default function CompaniesPage() {
               <input
                 type="text"
                 placeholder="Search by company name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={state.searchTerm}
+                onChange={(e) =>
+                  dispatch({ type: "SET_SEARCH", payload: e.target.value })
+                }
                 className="w-full pl-12 pr-4 py-4 rounded-xl border border-surface-border bg-white text-text-dark focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all outline-none"
               />
             </div>
@@ -106,89 +226,15 @@ export default function CompaniesPage() {
         {/* Companies Grid */}
         <section className="py-12 lg:py-20">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8 flex justify-between items-center text-text-dark font-medium">
-              <h2 className="text-xl">
-                All Companies{" "}
-                <span className="text-text-muted text-sm ml-2">
-                  ({totalCompanies})
-                </span>
-              </h2>
+            <div className={isPending ? "opacity-60 transition-opacity" : ""}>
+              <Suspense fallback={<CompaniesSkeleton />}>
+                <CompaniesContent
+                  dataPromise={promiseRef.current}
+                  currentPage={state.currentPage}
+                  onPageChange={handlePageChange}
+                />
+              </Suspense>
             </div>
-
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {" "}
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[280px] bg-white/50 animate-pulse rounded-xl border border-surface-border shadow-sm"
-                  />
-                ))}
-              </div>
-            ) : companies.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {companies.map((company, index) => (
-                    <Link
-                      key={company.id}
-                      href={`/companies/${company.uuid}`}
-                      className="block group"
-                    >
-                      <div
-                        className="bg-white border border-surface-border rounded-xl p-6 hover:shadow-card hover:border-brand-primary transition-all duration-300 animate-fade-in-up h-full flex flex-col items-center text-center"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div className="w-20 h-20 rounded-2xl bg-surface-light border border-surface-border flex items-center justify-center overflow-hidden mb-4 group-hover:scale-105 transition-transform duration-300">
-                          {company.logo ? (
-                            <Image
-                              src={company.logo}
-                              alt={company.name}
-                              width={48}
-                              height={48}
-                              className="object-contain"
-                            />
-                          ) : (
-                            <span className="text-brand-primary font-bold text-2xl">
-                              {company.name.charAt(0)}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-lg font-bold text-text-dark mb-1 group-hover:text-brand-primary transition-colors">
-                          {company.name}
-                        </h3>
-                        <p className="text-sm text-text-muted mb-4">
-                          {company.location}
-                        </p>
-                        <span className="mt-auto px-4 py-1.5 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-semibold">
-                          {company.jobs?.length || 0} Jobs Available
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {totalPages > 1 && (
-                  <div className="mt-12 pt-8 border-t border-surface-border flex justify-center">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-20 bg-surface rounded-xl border border-surface-border">
-                <Search size={48} className="mx-auto text-text-light mb-4" />
-                <h3 className="text-xl font-bold text-text-dark mb-2">
-                  No Companies Found
-                </h3>
-                <p className="text-text-muted">
-                  We could not find any companies matching your search. Try
-                  different keywords.
-                </p>
-              </div>
-            )}
           </div>
         </section>
       </main>

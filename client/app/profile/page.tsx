@@ -1,7 +1,8 @@
 "use client";
 
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
-import { useAuth, User } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
+import { profileInitialState, profileReducer } from "@/reducers/profileReducer";
 import { alertService } from "@/utils/alertService";
 import {
   Briefcase,
@@ -15,16 +16,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 
 export default function ProfilePage() {
   const { user, token, isLoaded, logout } = useAuth();
   const router = useRouter();
-  const [profileData, setProfileData] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "applied" | "settings"
-  >("overview");
+  const [state, dispatch] = useReducer(profileReducer, profileInitialState);
 
   // Mock applied jobs data for UI purposes
   const mockAppliedJobs = [
@@ -85,7 +82,7 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (data.success) {
-        setProfileData(data.user);
+        dispatch({ type: "FETCH_SUCCESS", payload: data.user });
       } else {
         if (res.status === 401) {
           logout();
@@ -99,7 +96,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -123,7 +120,7 @@ export default function ProfilePage() {
       });
   };
 
-  if (!isLoaded || loading) {
+  if (!isLoaded || state.loading) {
     return (
       <main className="min-h-screen pt-32 pb-12 flex items-center justify-center bg-surface-muted">
         <Loader2 className="animate-spin text-brand-primary w-12 h-12" />
@@ -131,7 +128,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!profileData) return null;
+  if (!state.profileData) return null;
 
   return (
     <main className="min-h-screen pt-28 pb-12 bg-surface-muted animate-fade-in">
@@ -143,23 +140,28 @@ export default function ProfilePage() {
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-white opacity-5 rounded-full translate-y-1/3 -translate-x-1/4"></div>
 
           <div className="w-24 h-24 rounded-full bg-white text-brand-primary flex items-center justify-center text-4xl font-bold shadow-lg z-10 shrink-0">
-            {profileData.name.charAt(0).toUpperCase()}
+            {state.profileData.name.charAt(0).toUpperCase()}
           </div>
           <div className="text-center md:text-left z-10">
-            <h1 className="text-3xl font-bold">{profileData.name}</h1>
+            <h1 className="text-3xl font-bold">{state.profileData.name}</h1>
             <p className="text-white/80 mt-1 text-lg flex items-center justify-center md:justify-start gap-2 capitalize font-medium">
-              {profileData.role.toLowerCase()}
+              {state.profileData.role.toLowerCase()}
             </p>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
-          <ProfileSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+          <ProfileSidebar
+            activeTab={state.activeTab}
+            setActiveTab={(tab: "overview" | "applied" | "settings") =>
+              dispatch({ type: "SET_TAB", payload: tab })
+            }
+          />
 
           {/* Main Content Area */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-surface-border p-6 md:p-8 min-h-[500px]">
             {/* Overview Tab */}
-            {activeTab === "overview" && (
+            {state.activeTab === "overview" && (
               <div className="animate-fade-in">
                 <div className="flex items-center justify-between mb-6 border-b border-surface-border pb-4">
                   <h2 className="text-2xl font-bold text-text-dark">
@@ -177,7 +179,7 @@ export default function ProfilePage() {
                         Full Name
                       </span>
                       <span className="text-text-dark font-semibold text-lg">
-                        {profileData.name}
+                        {state.profileData.name}
                       </span>
                     </div>
                   </div>
@@ -191,7 +193,7 @@ export default function ProfilePage() {
                         Email Address
                       </span>
                       <span className="text-text-dark font-semibold text-lg truncate">
-                        {profileData.email}
+                        {state.profileData.email}
                       </span>
                     </div>
                   </div>
@@ -205,7 +207,7 @@ export default function ProfilePage() {
                         Account Role
                       </span>
                       <span className="text-text-dark capitalize font-semibold text-lg">
-                        {profileData.role.toLowerCase()}
+                        {state.profileData.role.toLowerCase()}
                       </span>
                     </div>
                   </div>
@@ -219,9 +221,9 @@ export default function ProfilePage() {
                         Member Since
                       </span>
                       <span className="text-text-dark font-semibold text-lg">
-                        {"createdAt" in profileData
+                        {"createdAt" in state.profileData
                           ? new Date(
-                              profileData.createdAt as string,
+                              state.profileData.createdAt as string,
                             ).toLocaleDateString("en-US", {
                               year: "numeric",
                               month: "long",
@@ -236,7 +238,7 @@ export default function ProfilePage() {
             )}
 
             {/* Applied Tab */}
-            {activeTab === "applied" && (
+            {state.activeTab === "applied" && (
               <div className="animate-fade-in">
                 <div className="flex items-center justify-between mb-6 border-b border-surface-border pb-4">
                   <h2 className="text-2xl font-bold text-text-dark">
@@ -313,7 +315,7 @@ export default function ProfilePage() {
             )}
 
             {/* Settings Tab */}
-            {activeTab === "settings" && (
+            {state.activeTab === "settings" && (
               <div className="animate-fade-in">
                 <div className="flex items-center justify-between mb-6 border-b border-surface-border pb-4">
                   <h2 className="text-2xl font-bold text-text-dark">

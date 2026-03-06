@@ -3,32 +3,29 @@
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useAuth } from "@/context/AuthContext";
+import { loginInitialState, loginReducer } from "@/reducers/loginReducer";
 import { authService } from "@/services/auth.service";
 import { alertService } from "@/utils/alertService";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useReducer } from "react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {},
-  );
-  const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(loginReducer, loginInitialState);
   const router = useRouter();
   const { login } = useAuth();
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
-    if (!email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(email))
+    if (!state.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(state.email))
       newErrors.email = "Enter a valid email";
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6) newErrors.password = "Minimum 6 characters";
-    setErrors(newErrors);
+    if (!state.password) newErrors.password = "Password is required";
+    else if (state.password.length < 6)
+      newErrors.password = "Minimum 6 characters";
+    dispatch({ type: "SET_ERRORS", payload: newErrors });
     return Object.keys(newErrors).length === 0;
   };
 
@@ -36,9 +33,12 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setLoading(true);
+    dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const data = await authService.login({ email, password });
+      const data = await authService.login({
+        email: state.email,
+        password: state.password,
+      });
 
       if (data.success) {
         login(data.token, data.user);
@@ -54,7 +54,7 @@ export default function LoginPage() {
         error.message || "Invalid credentials.",
       );
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -153,9 +153,15 @@ export default function LoginPage() {
                   type="email"
                   id="login-email"
                   name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  error={errors.email}
+                  value={state.email}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "email",
+                      value: e.target.value,
+                    })
+                  }
+                  error={state.errors.email}
                   required
                   icon={
                     <svg
@@ -183,9 +189,15 @@ export default function LoginPage() {
                   type="password"
                   id="login-password"
                   name="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  error={errors.password}
+                  value={state.password}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "password",
+                      value: e.target.value,
+                    })
+                  }
+                  error={state.errors.password}
                   required
                   icon={
                     <svg
@@ -230,9 +242,9 @@ export default function LoginPage() {
                 size="lg"
                 className="w-full mt-2 hover:scale-[1.02] transition-transform duration-200 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"
                 id="login-submit"
-                disabled={loading}
+                disabled={state.loading}
               >
-                {loading ? (
+                {state.loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="animate-spin" size={20} /> Logging in...
                   </span>

@@ -2,6 +2,10 @@
 
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
+import {
+  jobDetailsInitialState,
+  jobDetailsReducer,
+} from "@/reducers/jobDetailsReducer";
 import { jobService } from "@/services/job.service";
 import { formatDate } from "@/utils/dateUtils";
 import { getInitials } from "@/utils/stringUtils";
@@ -16,42 +20,28 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { Suspense, use, useReducer, useRef } from "react";
 
-export default function JobDetailsPage({
-  params,
+// ─── Data Fetcher ────────────────────────────────────────
+function fetchJobDetails(
+  uuid: string,
+): Promise<{ job: any; error: string | null }> {
+  return jobService
+    .getJobDetails(uuid)
+    .then((data) => ({ job: data, error: null }))
+    .catch((err: any) => ({
+      job: null,
+      error: err.message || "Something went wrong.",
+    }));
+}
+
+// ─── Inner Content ───────────────────────────────────────
+function JobDetailsContent({
+  dataPromise,
 }: {
-  params: Promise<{ uuid: string }>;
+  dataPromise: Promise<{ job: any; error: string | null }>;
 }) {
-  const { uuid } = use(params);
-  const [job, setJob] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const data = await jobService.getJobDetails(uuid);
-        setJob(data);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (uuid) {
-      fetchJob();
-    }
-  }, [uuid]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
-      </div>
-    );
-  }
+  const { job, error } = use(dataPromise);
 
   if (error || !job) {
     return (
@@ -72,7 +62,6 @@ export default function JobDetailsPage({
     );
   }
 
-  // Format the date mapping
   const formattedDate = formatDate(job.createdAt);
 
   return (
@@ -279,5 +268,31 @@ export default function JobDetailsPage({
 
       <Footer />
     </div>
+  );
+}
+
+// ─── Skeleton ────────────────────────────────────────────
+function JobDetailsSkeleton() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
+    </div>
+  );
+}
+
+// ─── Page Component ──────────────────────────────────────
+export default function JobDetailsPage({
+  params,
+}: {
+  params: Promise<{ uuid: string }>;
+}) {
+  const { uuid } = use(params);
+  const [, dispatch] = useReducer(jobDetailsReducer, jobDetailsInitialState);
+  const promiseRef = useRef(fetchJobDetails(uuid));
+
+  return (
+    <Suspense fallback={<JobDetailsSkeleton />}>
+      <JobDetailsContent dataPromise={promiseRef.current} />
+    </Suspense>
   );
 }

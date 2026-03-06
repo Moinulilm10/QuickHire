@@ -1,9 +1,10 @@
 "use client";
 
+import { authInitialState, authReducer } from "@/reducers/authReducer";
 import { alertService } from "@/utils/alertService";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 
 export interface User {
   id: number | string;
@@ -24,9 +25,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function AuthProviderInner({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [state, dispatch] = useReducer(authReducer, authInitialState);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -42,9 +41,10 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
     }
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(storedUser);
-      setIsLoaded(true);
+      dispatch({
+        type: "SET_AUTH",
+        payload: { user: storedUser, token: storedToken },
+      });
       return; // traditional user is verified
     }
 
@@ -54,29 +54,28 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
       const nextToken = (session as any).accessToken;
 
       if (nextToken && nextUser) {
-        setToken(nextToken);
-        setUser(nextUser);
+        dispatch({
+          type: "SET_AUTH",
+          payload: { user: nextUser, token: nextToken },
+        });
       }
     } else if (status === "unauthenticated") {
-      setToken(null);
-      setUser(null);
+      dispatch({ type: "LOGOUT" });
     }
 
     if (status !== "loading") {
-      setIsLoaded(true);
+      dispatch({ type: "SET_LOADED" });
     }
   }, [session, status]);
 
   const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
+    dispatch({ type: "SET_AUTH", payload: { user: newUser, token: newToken } });
     localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(newUser));
   };
 
   const logout = async () => {
-    setToken(null);
-    setUser(null);
+    dispatch({ type: "LOGOUT" });
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
@@ -93,7 +92,15 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoaded }}>
+    <AuthContext.Provider
+      value={{
+        user: state.user,
+        token: state.token,
+        login,
+        logout,
+        isLoaded: state.isLoaded,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

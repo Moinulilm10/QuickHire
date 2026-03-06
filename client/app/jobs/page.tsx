@@ -5,60 +5,62 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Pagination from "@/components/ui/Pagination";
 import { Job } from "@/data/jobsData";
+import { jobsInitialState, jobsReducer } from "@/reducers/jobsReducer";
 import { MapPin, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, use, useReducer, useRef, useTransition } from "react";
 
-function JobsPageContent() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [locationTerm, setLocationTerm] = useState("");
-  const [isVisible, setIsVisible] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 8;
-  const searchParams = useSearchParams();
-  const categoryFilter = searchParams.get("category");
+const jobsPerPage = 8;
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, locationTerm, categoryFilter]);
-
-  useEffect(() => {
-    setIsVisible(true);
-
-    const fetchJobs = async () => {
-      try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-        const res = await fetch(`${apiUrl}/jobs?limit=100`);
-        const data = await res.json();
-
-        if (data.success) {
-          const formatted = data.jobs.map((job: any) => ({
-            id: job.id.toString(),
-            uuid: job.uuid,
-            title: job.title,
-            company: job.company?.name || "Unknown Company",
-            location: job.location || "Remote",
-            type: job.type || "Full Time",
-            categories: job.categories?.map((c: any) => c.name) || [],
-            logoColor: job.company?.logoColor || "#0061FF",
-            logoUrl: job.company?.logoUrl,
-            description: job.description,
-          }));
-          setJobs(formatted);
-        }
-      } catch (err) {
-        console.error("Failed to fetch jobs:", err);
-      } finally {
-        setLoading(false);
+// ─── Data Fetcher ────────────────────────────────────────
+function fetchJobs(): Promise<Job[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+  return fetch(`${apiUrl}/jobs?limit=100`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        return data.jobs.map((job: any) => ({
+          id: job.id.toString(),
+          uuid: job.uuid,
+          title: job.title,
+          company: job.company?.name || "Unknown Company",
+          location: job.location || "Remote",
+          type: job.type || "Full Time",
+          categories: job.categories?.map((c: any) => c.name) || [],
+          logoColor: job.company?.logoColor || "#0061FF",
+          logoUrl: job.company?.logoUrl,
+          description: job.description,
+        }));
       }
-    };
+      return [];
+    })
+    .catch((err) => {
+      console.error("Failed to fetch jobs:", err);
+      return [];
+    });
+}
 
-    fetchJobs();
-  }, []);
+// ─── Inner Content ───────────────────────────────────────
+function JobsContent({
+  dataPromise,
+  searchTerm,
+  locationTerm,
+  categoryFilter,
+  currentPage,
+  onSearchChange,
+  onLocationChange,
+  onPageChange,
+}: {
+  dataPromise: Promise<Job[]>;
+  searchTerm: string;
+  locationTerm: string;
+  categoryFilter: string | null;
+  currentPage: number;
+  onSearchChange: (value: string) => void;
+  onLocationChange: (value: string) => void;
+  onPageChange: (page: number) => void;
+}) {
+  const jobs = use(dataPromise);
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title
@@ -111,7 +113,7 @@ function JobsPageContent() {
                   placeholder="Job title or keyword"
                   className="w-full px-3 py-2 focus:outline-none text-text-dark placeholder:text-text-muted"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => onSearchChange(e.target.value)}
                 />
               </div>
               <div className="flex-1 flex items-center px-4 py-4 md:py-0">
@@ -121,7 +123,7 @@ function JobsPageContent() {
                   placeholder="Location"
                   className="w-full px-3 py-2 focus:outline-none text-text-dark placeholder:text-text-muted"
                   value={locationTerm}
-                  onChange={(e) => setLocationTerm(e.target.value)}
+                  onChange={(e) => onLocationChange(e.target.value)}
                 />
               </div>
               <button className="bg-brand-primary text-white font-bold px-8 py-4 hover:bg-brand-primary-hover transition-all duration-300">
@@ -143,16 +145,7 @@ function JobsPageContent() {
               </h2>
             </div>
 
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[280px] bg-white/50 animate-pulse rounded border border-surface-border shadow-sm"
-                  ></div>
-                ))}
-              </div>
-            ) : filteredJobs.length > 0 ? (
+            {filteredJobs.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 tracking-tight">
                   {paginatedJobs.map((job, index) => (
@@ -165,7 +158,7 @@ function JobsPageContent() {
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
-                      onPageChange={setCurrentPage}
+                      onPageChange={onPageChange}
                     />
                   </div>
                 )}
@@ -186,15 +179,49 @@ function JobsPageContent() {
   );
 }
 
+// ─── Skeleton ────────────────────────────────────────────
+function JobsSkeleton() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
+    </div>
+  );
+}
+
+// ─── Inner Wrapper (needs useSearchParams) ───────────────
+function JobsPageContent() {
+  const searchParams = useSearchParams();
+  const categoryFilter = searchParams.get("category");
+  const [state, dispatch] = useReducer(jobsReducer, jobsInitialState);
+  const [isPending, startTransition] = useTransition();
+  const promiseRef = useRef(fetchJobs());
+
+  return (
+    <div className={isPending ? "opacity-60 transition-opacity" : ""}>
+      <Suspense fallback={<JobsSkeleton />}>
+        <JobsContent
+          dataPromise={promiseRef.current}
+          searchTerm={state.searchTerm}
+          locationTerm={state.locationTerm}
+          categoryFilter={categoryFilter}
+          currentPage={state.currentPage}
+          onSearchChange={(value) =>
+            dispatch({ type: "SET_SEARCH", payload: value })
+          }
+          onLocationChange={(value) =>
+            dispatch({ type: "SET_LOCATION", payload: value })
+          }
+          onPageChange={(page) => dispatch({ type: "SET_PAGE", payload: page })}
+        />
+      </Suspense>
+    </div>
+  );
+}
+
+// ─── Page Component ──────────────────────────────────────
 export default function JobsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin"></div>
-        </div>
-      }
-    >
+    <Suspense fallback={<JobsSkeleton />}>
       <JobsPageContent />
     </Suspense>
   );

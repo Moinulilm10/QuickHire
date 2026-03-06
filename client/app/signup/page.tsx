@@ -3,43 +3,43 @@
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useAuth } from "@/context/AuthContext";
+import { signupInitialState, signupReducer } from "@/reducers/signupReducer";
 import { authService } from "@/services/auth.service";
 import { alertService } from "@/utils/alertService";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useReducer } from "react";
 
 export default function SignupPage() {
-  const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(signupReducer, signupInitialState);
   const router = useRouter();
   const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    dispatch({
+      type: "SET_FIELD",
+      field: e.target.name,
+      value: e.target.value,
+    });
     // Clear error on change
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: "" });
+    if (state.errors[e.target.name]) {
+      dispatch({ type: "CLEAR_FIELD_ERROR", field: e.target.name });
     }
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
-    if (!form.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(form.email))
+    if (!state.form.fullName.trim())
+      newErrors.fullName = "Full name is required";
+    if (!state.form.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(state.form.email))
       newErrors.email = "Enter a valid email";
-    if (!form.password) newErrors.password = "Password is required";
-    else if (form.password.length < 6)
+    if (!state.form.password) newErrors.password = "Password is required";
+    else if (state.form.password.length < 6)
       newErrors.password = "Minimum 6 characters";
-    setErrors(newErrors);
+    dispatch({ type: "SET_ERRORS", payload: newErrors });
     return Object.keys(newErrors).length === 0;
   };
 
@@ -47,12 +47,12 @@ export default function SignupPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setLoading(true);
+    dispatch({ type: "SET_LOADING", payload: true });
     try {
       const data = await authService.signup({
-        name: form.fullName,
-        email: form.email,
-        password: form.password,
+        name: state.form.fullName,
+        email: state.form.email,
+        password: state.form.password,
       });
 
       if (data.success) {
@@ -69,7 +69,7 @@ export default function SignupPage() {
         error.message || "Could not create account at this time.",
       );
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -171,9 +171,9 @@ export default function SignupPage() {
                   type="text"
                   id="signup-name"
                   name="fullName"
-                  value={form.fullName}
+                  value={state.form.fullName}
                   onChange={handleChange}
-                  error={errors.fullName}
+                  error={state.errors.fullName}
                   required
                   icon={
                     <svg
@@ -201,9 +201,9 @@ export default function SignupPage() {
                   type="email"
                   id="signup-email"
                   name="email"
-                  value={form.email}
+                  value={state.form.email}
                   onChange={handleChange}
-                  error={errors.email}
+                  error={state.errors.email}
                   required
                   icon={
                     <svg
@@ -231,9 +231,9 @@ export default function SignupPage() {
                   type="password"
                   id="signup-password"
                   name="password"
-                  value={form.password}
+                  value={state.form.password}
                   onChange={handleChange}
-                  error={errors.password}
+                  error={state.errors.password}
                   required
                   icon={
                     <svg
@@ -284,9 +284,9 @@ export default function SignupPage() {
                 size="lg"
                 className="w-full mt-2 hover:scale-[1.02] transition-transform duration-200 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"
                 id="signup-submit"
-                disabled={loading}
+                disabled={state.loading}
               >
-                {loading ? (
+                {state.loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="animate-spin" size={20} /> Creating
                     Account...

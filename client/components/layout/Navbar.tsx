@@ -2,10 +2,11 @@
 
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
+import { navbarInitialState, navbarReducer } from "@/reducers/navbarReducer";
 import { ChevronDown, LogOut, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 
 const navLinks = [
   { label: "Find Jobs", href: "/jobs" },
@@ -13,14 +14,13 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [state, dispatch] = useReducer(navbarReducer, navbarInitialState);
   const { user, logout, isLoaded } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () =>
+      dispatch({ type: "SET_SCROLLED", payload: window.scrollY > 20 });
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -32,7 +32,7 @@ export default function Navbar() {
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setDropdownOpen(false);
+        dispatch({ type: "CLOSE_DROPDOWN" });
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -42,7 +42,9 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/90 backdrop-blur-md shadow-sm" : "bg-transparent"
+        state.scrolled
+          ? "bg-white/90 backdrop-blur-md shadow-sm"
+          : "bg-transparent"
       }`}
     >
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,7 +80,7 @@ export default function Navbar() {
               user ? (
                 <div className="relative" ref={dropdownRef}>
                   <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    onClick={() => dispatch({ type: "TOGGLE_DROPDOWN" })}
                     className="flex items-center gap-2 py-2 px-3 rounded-full hover:bg-surface-muted transition-colors duration-200 cursor-pointer text-text-dark font-medium border border-surface-border"
                   >
                     <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold">
@@ -87,14 +89,14 @@ export default function Navbar() {
                     <span>{user.name}</span>
                     <ChevronDown
                       size={16}
-                      className={`transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                      className={`transition-transform duration-200 ${state.dropdownOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 
                   {/* Dropdown Menu */}
                   <div
                     className={`absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-surface-border overflow-hidden transition-all duration-200 transform origin-top-right ${
-                      dropdownOpen
+                      state.dropdownOpen
                         ? "scale-100 opacity-100 visible"
                         : "scale-95 opacity-0 invisible"
                     }`}
@@ -102,7 +104,7 @@ export default function Navbar() {
                     <div className="p-2 flex flex-col gap-1">
                       <Link
                         href="/profile"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => dispatch({ type: "CLOSE_DROPDOWN" })}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-brand-primary-light hover:text-brand-primary rounded-lg transition-colors cursor-pointer"
                       >
                         <User size={16} />
@@ -110,7 +112,7 @@ export default function Navbar() {
                       </Link>
                       <button
                         onClick={() => {
-                          setDropdownOpen(false);
+                          dispatch({ type: "CLOSE_DROPDOWN" });
                           logout();
                         }}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer w-full text-left"
@@ -142,12 +144,9 @@ export default function Navbar() {
           {/* Mobile Hamburger */}
           <button
             className="md:hidden relative w-9 h-9 flex items-center justify-center cursor-pointer group"
-            onClick={() => {
-              setMobileOpen(!mobileOpen);
-              setDropdownOpen(false);
-            }}
+            onClick={() => dispatch({ type: "TOGGLE_MOBILE" })}
             aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
+            aria-expanded={state.mobileOpen}
           >
             {/* Hamburger SVG icon */}
             <Image
@@ -156,7 +155,7 @@ export default function Navbar() {
               width={36}
               height={36}
               className={`absolute inset-0 transition-all duration-300 ease-in-out group-hover:scale-105 ${
-                mobileOpen
+                state.mobileOpen
                   ? "opacity-0 rotate-90 scale-75"
                   : "opacity-100 rotate-0 scale-100"
               }`}
@@ -169,7 +168,7 @@ export default function Navbar() {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               className={`absolute inset-0 transition-all duration-300 ease-in-out ${
-                mobileOpen
+                state.mobileOpen
                   ? "opacity-100 rotate-0 scale-100"
                   : "opacity-0 -rotate-90 scale-75"
               }`}
@@ -204,7 +203,9 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-400 ease-in-out ${
-            mobileOpen ? "max-h-[500px] opacity-100 pb-6" : "max-h-0 opacity-0"
+            state.mobileOpen
+              ? "max-h-[500px] opacity-100 pb-6"
+              : "max-h-0 opacity-0"
           }`}
         >
           <div className="flex flex-col gap-3 pt-2">
@@ -213,7 +214,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className="text-text-body font-medium text-base hover:text-brand-primary transition-colors duration-[var(--transition-fast)] py-2 px-2 rounded-lg hover:bg-brand-primary-light"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => dispatch({ type: "CLOSE_ALL" })}
               >
                 {link.label}
               </Link>
@@ -233,7 +234,7 @@ export default function Navbar() {
                   </div>
                   <Link
                     href="/profile"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => dispatch({ type: "CLOSE_ALL" })}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-brand-primary-light hover:text-brand-primary rounded-lg transition-colors cursor-pointer"
                   >
                     <User size={16} />
@@ -241,7 +242,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={() => {
-                      setMobileOpen(false);
+                      dispatch({ type: "CLOSE_ALL" });
                       logout();
                     }}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer w-full text-left"

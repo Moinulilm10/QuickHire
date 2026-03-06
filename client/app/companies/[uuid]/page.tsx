@@ -4,51 +4,42 @@ import JobCard from "@/components/jobs/JobCard";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Pagination from "@/components/ui/Pagination";
+import {
+  companyDetailsInitialState,
+  companyDetailsReducer,
+} from "@/reducers/companyDetailsReducer";
 import { companyService } from "@/services/company.service";
 import { ArrowLeft, MapPin, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, use, useReducer, useRef, useTransition } from "react";
 
-export default function CompanyDetailsPage() {
-  const { uuid } = useParams();
-  const [company, setCompany] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const jobsPerPage = 8;
 
-  // Search and Pagination State
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 8;
+// ─── Data Fetcher ────────────────────────────────────────
+function fetchCompanyDetails(uuid: string): Promise<any> {
+  return companyService.getCompanyDetails(uuid).catch((error) => {
+    console.error("Failed to fetch company details:", error);
+    return null;
+  });
+}
 
-  useEffect(() => {
-    const fetchCompanyDetails = async () => {
-      if (!uuid) return;
-      try {
-        setLoading(true);
-        const data = await companyService.getCompanyDetails(uuid as string);
-        setCompany(data);
-      } catch (error) {
-        console.error("Failed to fetch company details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCompanyDetails();
-  }, [uuid]);
-
-  // Reset page to 1 when search term changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
-      </div>
-    );
-  }
+// ─── Inner Content ───────────────────────────────────────
+function CompanyContent({
+  dataPromise,
+  searchTerm,
+  currentPage,
+  onSearchChange,
+  onPageChange,
+}: {
+  dataPromise: Promise<any>;
+  searchTerm: string;
+  currentPage: number;
+  onSearchChange: (value: string) => void;
+  onPageChange: (page: number) => void;
+}) {
+  const company = use(dataPromise);
 
   if (!company) {
     return (
@@ -74,12 +65,12 @@ export default function CompanyDetailsPage() {
     );
   }
 
-  // Filter jobs explicitly by job title and status
+  // Filter jobs by search term
   const filteredJobs = (company.jobs || []).filter((job: any) =>
     job.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Calculate pagination indices
+  // Calculate pagination
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
   const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
@@ -164,7 +155,7 @@ export default function CompanyDetailsPage() {
                   type="text"
                   placeholder="Search job titles..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => onSearchChange(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-surface-border bg-white text-text-dark focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 transition-all outline-none"
                 />
               </div>
@@ -174,7 +165,6 @@ export default function CompanyDetailsPage() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 tracking-tight">
                   {currentJobs.map((job: any, index: number) => {
-                    // Format job object to match Job component expectations
                     const formattedJob = {
                       ...job,
                       id: job.id.toString(),
@@ -195,7 +185,7 @@ export default function CompanyDetailsPage() {
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
-                      onPageChange={setCurrentPage}
+                      onPageChange={onPageChange}
                     />
                   </div>
                 )}
@@ -220,6 +210,44 @@ export default function CompanyDetailsPage() {
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+// ─── Skeleton ────────────────────────────────────────────
+function CompanyDetailsSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
+    </div>
+  );
+}
+
+// ─── Page Component ──────────────────────────────────────
+export default function CompanyDetailsPage() {
+  const { uuid } = useParams();
+  const [state, dispatch] = useReducer(
+    companyDetailsReducer,
+    companyDetailsInitialState,
+  );
+  const [isPending, startTransition] = useTransition();
+  const promiseRef = useRef(
+    uuid ? fetchCompanyDetails(uuid as string) : Promise.resolve(null),
+  );
+
+  return (
+    <div className={isPending ? "opacity-60 transition-opacity" : ""}>
+      <Suspense fallback={<CompanyDetailsSkeleton />}>
+        <CompanyContent
+          dataPromise={promiseRef.current}
+          searchTerm={state.searchTerm}
+          currentPage={state.currentPage}
+          onSearchChange={(value) =>
+            dispatch({ type: "SET_SEARCH", payload: value })
+          }
+          onPageChange={(page) => dispatch({ type: "SET_PAGE", payload: page })}
+        />
+      </Suspense>
     </div>
   );
 }

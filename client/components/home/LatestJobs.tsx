@@ -1,54 +1,97 @@
 "use client";
 
 import { Job } from "@/data/jobsData";
+import {
+  latestJobsInitialState,
+  latestJobsReducer,
+} from "@/reducers/latestJobsReducer";
 import { jobService } from "@/services/job.service";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, use, useEffect, useReducer, useRef } from "react";
 import LatestJobCard from "./LatestJobCard";
 
+// ─── Data Fetcher ────────────────────────────────────────
+function fetchLatestJobs(): Promise<Job[]> {
+  return jobService
+    .getLatestJobs()
+    .then((jobsData) => {
+      if (jobsData) {
+        return jobsData.map((job: any) => ({
+          id: job.id.toString(),
+          uuid: job.uuid,
+          title: job.title,
+          company: job.company?.name || "Unknown Company",
+          location: job.location || "Remote",
+          type: job.type || "Full Time",
+          categories: job.categories?.map((c: any) => c.name) || [],
+          logoColor: job.logoColor || "#0061FF",
+          logoUrl: job.logo,
+          description: undefined,
+          createdAt: job.createdAt,
+        }));
+      }
+      return [];
+    })
+    .catch((err) => {
+      console.error("Failed to fetch latest jobs:", err);
+      return [];
+    });
+}
+
+// ─── Inner Content ───────────────────────────────────────
+function LatestJobsContent({
+  dataPromise,
+  isVisible,
+}: {
+  dataPromise: Promise<Job[]>;
+  isVisible: boolean;
+}) {
+  const jobs = use(dataPromise);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {jobs.map((job, index) => (
+        <LatestJobCard
+          key={job.id}
+          job={job}
+          index={index}
+          isVisible={isVisible}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Skeleton ────────────────────────────────────────────
+function LatestJobsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-[120px] bg-white/50 animate-pulse rounded border border-surface-border shadow-sm"
+        ></div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Component ───────────────────────────────────────────
 export default function LatestJobs() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [state, dispatch] = useReducer(
+    latestJobsReducer,
+    latestJobsInitialState,
+  );
+  const promiseRef = useRef(fetchLatestJobs());
 
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchLatestJobs = async () => {
-      try {
-        const jobsData = await jobService.getLatestJobs();
-
-        if (jobsData) {
-          const formatted = jobsData.map((job: any) => ({
-            id: job.id.toString(),
-            uuid: job.uuid,
-            title: job.title,
-            company: job.company?.name || "Unknown Company",
-            location: job.location || "Remote",
-            type: job.type || "Full Time",
-            categories: job.categories?.map((c: any) => c.name) || [],
-            logoColor: job.logoColor || "#0061FF",
-            logoUrl: job.logo,
-            description: undefined,
-            createdAt: job.createdAt,
-          }));
-          setJobs(formatted);
-        }
-      } catch (err) {
-        console.error("Failed to fetch latest jobs:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLatestJobs();
-  }, []);
-
+  // IntersectionObserver — kept as useEffect (DOM side-effect)
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          dispatch({ type: "SET_VISIBLE" });
           observer.disconnect();
         }
       },
@@ -81,7 +124,7 @@ export default function LatestJobs() {
         {/* Header */}
         <div
           className={`flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 lg:mb-14 gap-4 ${
-            isVisible ? "animate-fade-in-up" : "opacity-0"
+            state.isVisible ? "animate-fade-in-up" : "opacity-0"
           }`}
         >
           <h2 className="text-[32px] sm:text-[40px] font-bold text-text-dark leading-tight tracking-tight">
@@ -100,23 +143,12 @@ export default function LatestJobs() {
         </div>
 
         {/* Jobs Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {loading
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[120px] bg-white/50 animate-pulse rounded border border-surface-border shadow-sm"
-                ></div>
-              ))
-            : jobs.map((job, index) => (
-                <LatestJobCard
-                  key={job.id}
-                  job={job}
-                  index={index}
-                  isVisible={isVisible}
-                />
-              ))}
-        </div>
+        <Suspense fallback={<LatestJobsSkeleton />}>
+          <LatestJobsContent
+            dataPromise={promiseRef.current}
+            isVisible={state.isVisible}
+          />
+        </Suspense>
       </div>
     </section>
   );
