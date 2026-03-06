@@ -9,7 +9,7 @@ const fs = require("fs");
 // Multer config for profiles
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const dir = "src/uploads/profiles";
+    const dir = "uploads/profiles";
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }

@@ -138,9 +138,15 @@ exports.login = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = parseInt(req.user.userId);
 
-    const user = await AuthModel.findUserById(parseInt(userId));
+    if (isNaN(userId)) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid session" });
+    }
+
+    const user = await AuthModel.findUserById(userId);
 
     if (!user) {
       return res
@@ -150,7 +156,14 @@ exports.getProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user,
+      user: {
+        id: user.id,
+        uuid: user.uuid,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        picture: user.picture,
+      },
     });
   } catch (error) {
     console.error("Profile Error:", error);
