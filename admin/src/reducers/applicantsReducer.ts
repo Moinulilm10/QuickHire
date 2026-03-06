@@ -5,6 +5,7 @@ export interface ApplicantsState {
   statusFilter: string;
   loadingId: number | null;
   previewUrl: string | null;
+  previewTitle: string | null;
 }
 
 export const applicantsInitialState: ApplicantsState = {
@@ -13,6 +14,7 @@ export const applicantsInitialState: ApplicantsState = {
   statusFilter: "ALL",
   loadingId: null,
   previewUrl: null,
+  previewTitle: null,
 };
 
 // ─── Actions ─────────────────────────────────────────────
@@ -21,7 +23,7 @@ export type ApplicantsAction =
   | { type: "SET_DEBOUNCED_SEARCH"; payload: string }
   | { type: "SET_STATUS_FILTER"; payload: string }
   | { type: "SET_LOADING_ID"; payload: number | null }
-  | { type: "OPEN_PREVIEW"; payload: string }
+  | { type: "OPEN_PREVIEW"; payload: { url: string; title: string } }
   | { type: "CLOSE_PREVIEW" };
 
 // ─── Reducer ─────────────────────────────────────────────
@@ -39,7 +41,11 @@ export function applicantsReducer(
     case "SET_LOADING_ID":
       return { ...state, loadingId: action.payload };
     case "OPEN_PREVIEW":
-      return { ...state, previewUrl: action.payload };
+      return {
+        ...state,
+        previewUrl: action.payload.url,
+        previewTitle: action.payload.title,
+      };
     case "CLOSE_PREVIEW":
       return { ...state, previewUrl: null };
     default:

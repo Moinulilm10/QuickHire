@@ -31,9 +31,22 @@ exports.getJobById = async (req, res, next) => {
         message: "Job not found",
       });
     }
+    let applied = false;
+    if (req.user) {
+      const existing = await prisma.jobApplication.findUnique({
+        where: {
+          userId_jobId: {
+            userId: req.user.userId,
+            jobId: job.id,
+          },
+        },
+      });
+      applied = !!existing;
+    }
+
     res.status(200).json({
       success: true,
-      data: job,
+      data: { ...job, applied },
     });
   } catch (error) {
     next(error);

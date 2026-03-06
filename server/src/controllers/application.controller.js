@@ -1,4 +1,6 @@
 const prisma = require("../config/prisma");
+const fs = require("fs");
+const path = require("path");
 
 // Create application
 const createApplication = async (req, res, next) => {
@@ -35,12 +37,25 @@ const createApplication = async (req, res, next) => {
       resumePath = `/uploads/resumes/${req.file.filename}`;
     }
 
+    let coverLetterPath = null;
+    if (coverLetter) {
+      const fileName = `cover_letter_${Date.now()}_${userId}.txt`;
+      coverLetterPath = `/uploads/cover_letters/${fileName}`;
+      const fullPath = path.join(
+        __dirname,
+        "../../uploads/cover_letters",
+        fileName,
+      );
+      fs.writeFileSync(fullPath, coverLetter);
+    }
+
     const application = await prisma.jobApplication.create({
       data: {
         userId: parseInt(userId),
         jobId: parseInt(jobId),
         companyId: parseInt(companyId),
         coverLetter: coverLetter || null,
+        coverLetterFile: coverLetterPath,
         resume: resumePath,
       },
       include: {

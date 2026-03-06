@@ -7,6 +7,7 @@ export interface ProfileState {
   activeTab: "overview" | "applied" | "settings";
   applications: any[];
   previewPdfUrl: string | null;
+  previewTitle: string | null;
 }
 
 export const profileInitialState: ProfileState = {
@@ -15,6 +16,7 @@ export const profileInitialState: ProfileState = {
   activeTab: "overview",
   applications: [],
   previewPdfUrl: null,
+  previewTitle: null,
 };
 
 // ─── Actions ─────────────────────────────────────────────
@@ -23,7 +25,7 @@ export type ProfileAction =
   | { type: "FETCH_APPLICATIONS_SUCCESS"; payload: any[] }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_TAB"; payload: "overview" | "applied" | "settings" }
-  | { type: "OPEN_PREVIEW"; payload: string }
+  | { type: "OPEN_PREVIEW"; payload: { url: string; title: string } }
   | { type: "CLOSE_PREVIEW" };
 
 // ─── Reducer ─────────────────────────────────────────────
@@ -41,7 +43,11 @@ export function profileReducer(
     case "SET_TAB":
       return { ...state, activeTab: action.payload };
     case "OPEN_PREVIEW":
-      return { ...state, previewPdfUrl: action.payload };
+      return {
+        ...state,
+        previewPdfUrl: action.payload.url,
+        previewTitle: action.payload.title,
+      };
     case "CLOSE_PREVIEW":
       return { ...state, previewPdfUrl: null };
     default:

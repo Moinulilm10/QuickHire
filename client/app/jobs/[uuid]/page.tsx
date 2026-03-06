@@ -141,12 +141,21 @@ function JobDetailsContent({
 
               {/* Apply Action */}
               <div className="md:self-center shrink-0 w-full md:w-auto mt-6 md:mt-0">
-                <button
-                  onClick={onApplyClick}
-                  className="w-full md:w-auto bg-brand-primary text-white font-bold px-8 py-4 rounded-md hover:bg-brand-primary-hover hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  Apply for this job
-                </button>
+                {job.applied ? (
+                  <Link
+                    href="/profile"
+                    className="w-full md:w-auto bg-green-600 text-white font-bold px-8 py-4 rounded-md hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 inline-flex items-center justify-center gap-2"
+                  >
+                    <span>Applied</span>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={onApplyClick}
+                    className="w-full md:w-auto bg-brand-primary text-white font-bold px-8 py-4 rounded-md hover:bg-brand-primary-hover hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    Apply for this job
+                  </button>
+                )}
                 <p className="text-center text-sm text-text-muted mt-3">
                   Status:{" "}
                   <span className="font-semibold capitalize text-brand-accent">

@@ -239,11 +239,14 @@ function ApplicantsContent({
                             onClick={() =>
                               dispatch({
                                 type: "OPEN_PREVIEW",
-                                payload: app.resume,
+                                payload: {
+                                  url: app.resume,
+                                  title: `Resume - ${app.user?.name}`,
+                                },
                               })
                             }
                             title="View Resume"
-                            className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 bg-white"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 bg-white"
                           >
                             <FileText size={18} />
                           </button>
@@ -251,6 +254,31 @@ function ApplicantsContent({
                           <span
                             className="p-2 text-gray-300"
                             title="No resume attached"
+                          >
+                            <FileText size={18} />
+                          </span>
+                        )}
+
+                        {app.coverLetterFile ? (
+                          <button
+                            onClick={() =>
+                              dispatch({
+                                type: "OPEN_PREVIEW",
+                                payload: {
+                                  url: app.coverLetterFile,
+                                  title: `Cover Letter - ${app.user?.name}`,
+                                },
+                              })
+                            }
+                            title="View Cover Letter"
+                            className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-amber-100 bg-white"
+                          >
+                            <FileText size={18} />
+                          </button>
+                        ) : (
+                          <span
+                            className="p-2 text-gray-300"
+                            title="No cover letter attached"
                           >
                             <FileText size={18} />
                           </span>
@@ -277,7 +305,7 @@ function ApplicantsContent({
         isOpen={!!state.previewUrl}
         onClose={() => dispatch({ type: "CLOSE_PREVIEW" })}
         pdfUrl={state.previewUrl}
-        title="Applicant Resume"
+        title={state.previewTitle || "Document Preview"}
       />
     </div>
   );

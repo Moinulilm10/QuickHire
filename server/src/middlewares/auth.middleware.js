@@ -29,4 +29,24 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "QUICKHIRE_SUPER_SECRET_KEY_2026",
+    );
+    req.user = decoded;
+    next();
+  } catch (error) {
+    next();
+  }
+};
+
+module.exports = { authMiddleware, optionalAuth };

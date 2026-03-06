@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const categoryController = require("../controllers/category.controller");
-const authMiddleware = require("../middlewares/auth.middleware");
+const { authMiddleware } = require("../middlewares/auth.middleware");
 
 // Public (or user-facing) route without auth to get categories (e.g. for dropdowns)
 router.get("/", categoryController.getAllCategories);

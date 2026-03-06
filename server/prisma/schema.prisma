@@ -69,7 +69,8 @@ model JobApplication {
   companyId   Int
   status      String   @default("PENDING")
   resume      String?
-  coverLetter String?
+  coverLetter     String?
+  coverLetterFile String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   company     Company  @relation(fields: [companyId], references: [id])

@@ -261,12 +261,32 @@ export default function ProfilePage() {
                                   e.preventDefault();
                                   dispatch({
                                     type: "OPEN_PREVIEW",
-                                    payload: app.resume,
+                                    payload: {
+                                      url: app.resume,
+                                      title: "Submitted Resume",
+                                    },
                                   });
                                 }}
                                 className="mt-3 text-sm text-brand-primary font-medium hover:underline inline-flex items-center gap-1"
                               >
-                                <FileText size={16} /> View Submitted Resume
+                                <FileText size={16} /> View Resume
+                              </button>
+                            )}
+                            {app.coverLetterFile && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  dispatch({
+                                    type: "OPEN_PREVIEW",
+                                    payload: {
+                                      url: app.coverLetterFile,
+                                      title: "Submitted Cover Letter",
+                                    },
+                                  });
+                                }}
+                                className="ml-4 mt-3 text-sm text-amber-600 font-medium hover:underline inline-flex items-center gap-1"
+                              >
+                                <FileText size={16} /> View Cover Letter
                               </button>
                             )}
                           </div>
@@ -367,7 +387,7 @@ export default function ProfilePage() {
         isOpen={!!state.previewPdfUrl}
         onClose={() => dispatch({ type: "CLOSE_PREVIEW" })}
         pdfUrl={state.previewPdfUrl}
-        title="My Submitted Resume"
+        title={state.previewTitle || "File Preview"}
       />
     </main>
   );
