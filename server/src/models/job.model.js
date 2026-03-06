@@ -48,6 +48,7 @@ class JobModel {
       experience: true,
       logo: true,
       categories: { select: { id: true, uuid: true, name: true } },
+      company: { select: { id: true, uuid: true, name: true } },
       createdAt: true,
       _count: { select: { applications: true } },
     };
@@ -125,7 +126,7 @@ class JobModel {
 
     return await prisma.job.create({
       data: sanitiziedData,
-      include: { categories: true },
+      include: { categories: true, company: true },
     });
   }
 
@@ -149,7 +150,7 @@ class JobModel {
     return await prisma.job.update({
       where: { id: parseInt(id) },
       data: sanitiziedData,
-      include: { categories: true },
+      include: { categories: true, company: true },
     });
   }
 
