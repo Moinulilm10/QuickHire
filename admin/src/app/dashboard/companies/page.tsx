@@ -25,9 +25,7 @@ import {
 export default function CompaniesPage() {
   const [state, dispatch] = useReducer(companiesReducer, initialCompaniesState);
   const [isPending, startTransition] = useTransition();
-  const [dataPromise, setDataPromise] = useState(() =>
-    companyService.getCompanies(1, 10),
-  );
+  const [dataPromise, setDataPromise] = useState<Promise<any> | null>(null);
 
   const debouncedSearch = useDebounce(state.search, 400);
 
@@ -131,15 +129,19 @@ export default function CompaniesPage() {
       </div>
 
       {/* Data */}
-      <Suspense fallback={<CompaniesLoadingSkeleton />}>
-        <CompaniesDataContent
-          dataPromise={dataPromise}
-          isPending={isPending}
-          state={state}
-          dispatch={dispatch}
-          onDelete={handleDelete}
-        />
-      </Suspense>
+      {!dataPromise ? (
+        <CompaniesLoadingSkeleton />
+      ) : (
+        <Suspense fallback={<CompaniesLoadingSkeleton />}>
+          <CompaniesDataContent
+            dataPromise={dataPromise}
+            isPending={isPending}
+            state={state}
+            dispatch={dispatch}
+            onDelete={handleDelete}
+          />
+        </Suspense>
+      )}
 
       {/* Modal */}
       {state.isModalOpen && (

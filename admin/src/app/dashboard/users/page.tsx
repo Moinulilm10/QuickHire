@@ -7,12 +7,22 @@ import {
 import { initialUsersState, usersReducer } from "@/reducers/users.reducer";
 import { userService } from "@/services/user.service";
 import { alertService } from "@/utils/alertService";
-import { Suspense, useReducer, useState, useTransition } from "react";
+import {
+  Suspense,
+  useEffect,
+  useReducer,
+  useState,
+  useTransition,
+} from "react";
 
 export default function UsersPage() {
   const [state, dispatch] = useReducer(usersReducer, initialUsersState);
   const [isPending, startTransition] = useTransition();
-  const [dataPromise, setDataPromise] = useState(() => userService.getUsers(1));
+  const [dataPromise, setDataPromise] = useState<Promise<any> | null>(null);
+
+  useEffect(() => {
+    setDataPromise(userService.getUsers(1));
+  }, []);
 
   const refetch = (page?: number) => {
     const p = page ?? state.currentPage;
@@ -44,6 +54,14 @@ export default function UsersPage() {
       }
     }
   };
+
+  if (!dataPromise) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <UsersLoadingSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

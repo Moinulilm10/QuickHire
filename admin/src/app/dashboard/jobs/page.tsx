@@ -26,7 +26,7 @@ export default function JobsPage() {
   const [state, dispatch] = useReducer(jobsReducer, initialJobsState);
   const [isPending, startTransition] = useTransition();
   const debouncedSearch = useDebounce(state.search, 400);
-  const [dataPromise, setDataPromise] = useState(() => jobService.getJobs(1));
+  const [dataPromise, setDataPromise] = useState<Promise<any> | null>(null);
 
   const refetch = (page?: number, search?: string) => {
     const p = page ?? state.currentPage;
@@ -276,15 +276,19 @@ export default function JobsPage() {
           )}
         </div>
 
-        <Suspense fallback={<JobsLoadingSkeleton />}>
-          <JobsListContent
-            dataPromise={dataPromise}
-            isPending={isPending}
-            state={state}
-            dispatch={dispatch}
-            onDelete={handleDelete}
-          />
-        </Suspense>
+        {!dataPromise ? (
+          <JobsLoadingSkeleton />
+        ) : (
+          <Suspense fallback={<JobsLoadingSkeleton />}>
+            <JobsListContent
+              dataPromise={dataPromise}
+              isPending={isPending}
+              state={state}
+              dispatch={dispatch}
+              onDelete={handleDelete}
+            />
+          </Suspense>
+        )}
       </div>
 
       {state.showAddForm && !state.selectedJob && (

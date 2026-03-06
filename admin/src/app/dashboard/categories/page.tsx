@@ -13,7 +13,13 @@ import {
 import { categoryService } from "@/services/category.service";
 import { alertService } from "@/utils/alertService";
 import { Loader2, X } from "lucide-react";
-import { Suspense, useReducer, useState, useTransition } from "react";
+import {
+  Suspense,
+  useEffect,
+  useReducer,
+  useState,
+  useTransition,
+} from "react";
 
 export default function CategoriesPage() {
   const [state, dispatch] = useReducer(
@@ -21,9 +27,11 @@ export default function CategoriesPage() {
     initialCategoriesState,
   );
   const [isPending, startTransition] = useTransition();
-  const [dataPromise, setDataPromise] = useState(() =>
-    categoryService.getCategories(1),
-  );
+  const [dataPromise, setDataPromise] = useState<Promise<any> | null>(null);
+
+  useEffect(() => {
+    setDataPromise(categoryService.getCategories(1));
+  }, []);
 
   const refetch = (page?: number) => {
     const p = page ?? state.currentPage;
@@ -108,15 +116,19 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Suspense fallback={<CategoriesLoadingSkeleton />}>
-        <CategoriesDataContent
-          dataPromise={dataPromise}
-          isPending={isPending}
-          state={state}
-          dispatch={dispatch}
-          onDelete={handleDelete}
-        />
-      </Suspense>
+      {!dataPromise ? (
+        <CategoriesLoadingSkeleton />
+      ) : (
+        <Suspense fallback={<CategoriesLoadingSkeleton />}>
+          <CategoriesDataContent
+            dataPromise={dataPromise}
+            isPending={isPending}
+            state={state}
+            dispatch={dispatch}
+            onDelete={handleDelete}
+          />
+        </Suspense>
+      )}
 
       {/* Add / Edit Modal */}
       {state.showModal && (
