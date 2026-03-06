@@ -1,13 +1,7 @@
 "use client";
 
 import Card from "@/components/ui/Card";
-import {
-  Briefcase,
-  Clock,
-  Loader2,
-  PlusCircle,
-  TrendingUp,
-} from "lucide-react";
+import { Briefcase, Building2, FileText, Loader2 } from "lucide-react";
 import { use } from "react";
 import {
   Area,
@@ -26,12 +20,13 @@ interface DashboardResponse {
   stats?: {
     totalJobs: number;
     activeJobs: number;
-    expiredJobs: number;
-    draftJobs: number;
+    totalApplicants: number;
+    totalCompanies: number;
   };
   charts?: {
     jobsByCategory: { name: string; count: number }[];
     jobsOverTime: { month: string; jobs: number }[];
+    topCompaniesByApplicants: { name: string; count: number }[];
   };
   message?: string;
 }
@@ -61,18 +56,18 @@ export function DashboardDataContent({
       bg: "bg-success/10",
     },
     {
-      label: "Expired",
-      value: stats?.expiredJobs || 0,
-      icon: Clock,
-      color: "text-danger",
-      bg: "bg-danger/10",
-    },
-    {
-      label: "Drafts",
-      value: stats?.draftJobs || 0,
-      icon: PlusCircle,
+      label: "Total Applicants",
+      value: stats?.totalApplicants || 0,
+      icon: FileText,
       color: "text-accent",
       bg: "bg-accent/10",
+    },
+    {
+      label: "Total Companies",
+      value: stats?.totalCompanies || 0,
+      icon: Building2,
+      color: "text-amber-600",
+      bg: "bg-amber-100",
     },
   ];
 
@@ -178,6 +173,41 @@ export function DashboardDataContent({
             ) : (
               <div className="flex items-center justify-center h-full text-text-muted">
                 No trend data available
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card className="animate-fade-in-up">
+          <h3 className="text-base font-bold text-foreground mb-4">
+            Top Companies by Applicants
+          </h3>
+          <div className="w-full h-80">
+            {charts?.topCompaniesByApplicants?.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={charts.topCompaniesByApplicants}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                  />
+                  <YAxis tick={{ fontSize: 12, fill: "#64748b" }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#fff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#10B981" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-text-muted">
+                No company data available
               </div>
             )}
           </div>

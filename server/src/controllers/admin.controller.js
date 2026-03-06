@@ -2,13 +2,13 @@ const prisma = require("../config/prisma");
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. Basic counts
-    const [totalJobs, activeJobs, expiredJobs, draftJobs] = await Promise.all([
-      prisma.job.count(),
-      prisma.job.count({ where: { status: "active" } }),
-      prisma.job.count({ where: { status: "expired" } }),
-      prisma.job.count({ where: { status: "draft" } }),
-    ]);
+    const [totalJobs, activeJobs, totalApplicants, totalCompanies] =
+      await Promise.all([
+        prisma.job.count(),
+        prisma.job.count({ where: { status: "active" } }),
+        prisma.jobApplication.count(),
+        prisma.company.count(),
+      ]);
 
     // 2. Jobs by Category
     const categoriesWithCount = await prisma.category.findMany({
@@ -28,6 +28,26 @@ exports.getDashboardStats = async (req, res) => {
     const jobsByCategory = categoriesWithCount.map((cat) => ({
       name: cat.name,
       count: cat._count.jobs,
+    }));
+
+    // 2.5 Top Companies by Applicants
+    const topCompaniesWithApplicants = await prisma.company.findMany({
+      include: {
+        _count: {
+          select: { applications: true },
+        },
+      },
+      orderBy: {
+        applications: {
+          _count: "desc",
+        },
+      },
+      take: 8,
+    });
+
+    const topCompaniesByApplicants = topCompaniesWithApplicants.map((comp) => ({
+      name: comp.name,
+      count: comp._count.applications,
     }));
 
     // 3. Jobs over time (histogram for last 6 months)
@@ -78,12 +98,13 @@ exports.getDashboardStats = async (req, res) => {
       stats: {
         totalJobs,
         activeJobs,
-        expiredJobs,
-        draftJobs,
+        totalApplicants,
+        totalCompanies,
       },
       charts: {
         jobsByCategory: jobsByCategory.slice(0, 8), // Top 8 categories
         jobsOverTime: lastSixMonths,
+        topCompaniesByApplicants: topCompaniesByApplicants.slice(0, 8), // Top 8 companies
       },
     });
   } catch (error) {

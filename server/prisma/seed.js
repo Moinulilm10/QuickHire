@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 const { Pool } = require("pg");
+require("dotenv").config();
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -110,13 +111,259 @@ const categories = [
   { name: "Nonprofit & NGO" },
 ];
 
+const companyNames = [
+  "TechNova",
+  "PixelForge",
+  "CloudNexus",
+  "DataFlow",
+  "CyberShield",
+  "DevStream",
+  "CodeCrafters",
+  "AppSynergy",
+  "WebWorks",
+  "LogicPulse",
+  "NextGen Solutions",
+  "InnoTech",
+  "SmartSystems",
+  "GlobalSoft",
+  "FutureTech",
+  "AlphaCore",
+  "BetaBytes",
+  "GammaGroup",
+  "DeltaData",
+  "EpsilonEdge",
+  "ZetaZephyr",
+  "EtaEnterprise",
+  "ThetaTech",
+  "IotaInnovations",
+  "KappaKode",
+  "LambdaLabs",
+  "MuMatrix",
+  "NuNetworks",
+  "XiXenon",
+  "OmicronOps",
+  "PiPixel",
+  "RhoRobotics",
+  "SigmaSystems",
+  "TauTechnologies",
+  "UpsilonUnix",
+  "PhiPhotonics",
+  "ChiCyber",
+  "PsiPsionics",
+  "OmegaOrbit",
+  "InfinityInc",
+  "QuantumQuest",
+  "StellarSoft",
+  "NebulaNetworks",
+  "GalaxyGroup",
+  "CosmosCorp",
+  "AeroApps",
+  "BioBytes",
+  "ChemCode",
+  "EcoEdge",
+  "GeoGraphix",
+  "AstroAlgorith",
+  "HydroHub",
+  "PyroPixel",
+  "TerraTech",
+  "AquaApps",
+  "AetherAnalytics",
+  "SolarSystems",
+  "LunarLogic",
+  "MarsMatrix",
+  "VenusVector",
+  "JupiterJava",
+  "SaturnScripts",
+  "UranusUI",
+  "NeptuneNodes",
+  "PlutoPython",
+  "MercuryMobile",
+  "EarthEnterprise",
+  "CometCode",
+  "MeteorMedia",
+  "AsteroidApps",
+  "ZenithZone",
+  "ApexAnalytics",
+  "SummitSystems",
+  "PeakPixel",
+  "CrestCore",
+  "PinnaclePulse",
+  "CrownCloud",
+  "TiaraTech",
+  "CoronetCode",
+  "DiademData",
+  "VertexVentures",
+  "AcmeApps",
+  "ZenithZephyr",
+  "NadirNetworks",
+  "MeridianMatrix",
+  "EquatorEdge",
+  "TropicTech",
+  "PolarPixel",
+  "ArcticAnalytics",
+  "AntarcticApps",
+  "OceanicOps",
+  "PacificPython",
+  "AtlanticAlgorithms",
+  "IndianInc",
+  "ArcticAI",
+  "EverestEnterprise",
+  "K2Kode",
+  "FujiFunctions",
+  "AlpsApps",
+  "AndesAnalytics",
+];
+
+const locations = [
+  "Dhaka",
+  "Chattogram",
+  "Remote",
+  "Sylhet",
+  "Khulna",
+  "Rajshahi",
+  "New York",
+  "London",
+  "Berlin",
+  "San Francisco",
+];
+
+const jobTitles = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "React Developer",
+  "Node.js Developer",
+  "Software Engineer",
+  "Mobile App Developer",
+  "DevOps Engineer",
+  "Cloud Engineer",
+  "Data Scientist",
+  "Machine Learning Engineer",
+  "AI Engineer",
+  "Database Administrator",
+  "Cybersecurity Analyst",
+  "UI Designer",
+  "UX Designer",
+  "Product Manager",
+  "Project Manager",
+  "QA Engineer",
+  "Automation Tester",
+  "Technical Support Engineer",
+  "IT Support Specialist",
+  "SEO Specialist",
+  "Digital Marketing Manager",
+  "Content Writer",
+  "Social Media Manager",
+  "Sales Executive",
+  "Business Development Manager",
+  "HR Manager",
+  "Recruiter",
+  "Accountant",
+  "Financial Analyst",
+  "Legal Advisor",
+  "Operations Manager",
+  "Supply Chain Manager",
+  "Logistics Coordinator",
+  "Mechanical Engineer",
+  "Electrical Engineer",
+  "Civil Engineer",
+  "Architect",
+  "Construction Manager",
+  "Teacher",
+  "Research Assistant",
+  "Event Manager",
+  "Travel Consultant",
+  "Hotel Manager",
+  "Chef",
+  "Customer Success Manager",
+  "Technical Writer",
+  "System Administrator",
+];
+
+const types = ["Full-time", "Part-time", "Contract", "Remote", "Internship"];
+const experiences = ["Entry Level", "1-2 Years", "3-5 Years", "5+ Years"];
+const salaries = [
+  "$500 - $800",
+  "$800 - $1200",
+  "$1200 - $2000",
+  "$2000+",
+  "Competitive",
+  "Negotiable",
+];
+
+function randomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomCategories(cats) {
+  const shuffled = [...cats].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, Math.floor(Math.random() * 3) + 1);
+}
+
 async function main() {
+  console.log("🌱 Starting seed...");
+
+  // 1. Seed Categories
   await prisma.category.createMany({
     data: categories,
     skipDuplicates: true,
   });
+  console.log("✅ Categories seeded");
 
-  console.log("✅ Categories seeded successfully");
+  // 2. Seed 100 Companies
+  const companyData = [];
+  for (let i = 0; i < 100; i++) {
+    // Ensuring some names might overlap if we run out but we have exactly 100 in the array
+    const name = companyNames[i] || `Company ${i}`;
+    companyData.push({
+      name,
+      location: randomItem(locations),
+    });
+  }
+
+  await prisma.company.createMany({
+    data: companyData,
+    skipDuplicates: true,
+  });
+  console.log("✅ 100 Companies seeded");
+
+  // Retrieve available records for foreign keys
+  const dbCompanies = await prisma.company.findMany();
+  const dbCategories = await prisma.category.findMany();
+
+  if (!dbCompanies.length || !dbCategories.length) {
+    throw new Error("Missing companies or categories for job seeding");
+  }
+
+  // 3. Seed 100 Jobs
+  const jobs = [];
+  for (let i = 0; i < 100; i++) {
+    const comp = randomItem(dbCompanies);
+    const selectedCategories = randomCategories(dbCategories);
+
+    jobs.push(
+      prisma.job.create({
+        data: {
+          title: randomItem(jobTitles),
+          companyId: comp.id,
+          location: randomItem(locations),
+          type: randomItem(types),
+          experience: randomItem(experiences),
+          salary: randomItem(salaries),
+          description:
+            "We are looking for talented professionals to join our growing team. This is a great opportunity to work on exciting projects with a dynamic group of individuals.",
+          logoColor: "#4F46E5",
+          logo: null,
+          categories: {
+            connect: selectedCategories.map((c) => ({ id: c.id })),
+          },
+        },
+      }),
+    );
+  }
+
+  await Promise.all(jobs);
+  console.log("✅ 100 Jobs seeded successfully");
 }
 
 main()
