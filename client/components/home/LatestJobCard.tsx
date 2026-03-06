@@ -40,7 +40,7 @@ export default function LatestJobCard({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={`
-          flex items-start gap-4 p-6 bg-white border border-surface-border transition-all duration-300
+          relative flex items-start gap-4 p-6 bg-white border border-surface-border transition-all duration-300
           ${isVisible ? "animate-fade-in-up" : "opacity-0"}
         `}
         style={{
@@ -52,6 +52,13 @@ export default function LatestJobCard({
             : "var(--surface-border)",
         }}
       >
+        {/* Date - Top Right */}
+        {job.createdAt && (
+          <span className="absolute top-6 right-6 text-text-muted text-[12px] font-medium bg-surface-light px-2 py-1 rounded">
+            {formatDate(job.createdAt)}
+          </span>
+        )}
+
         {/* Logo */}
         <div
           className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-sm overflow-hidden"
@@ -69,7 +76,7 @@ export default function LatestJobCard({
             />
           ) : (
             <span className="text-white font-bold text-xl tracking-wider">
-              {getInitials(job.company || job.title)}
+              {getInitials(job.title)}
             </span>
           )}
         </div>
@@ -87,28 +94,26 @@ export default function LatestJobCard({
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`px-3 py-1  text-[12px] font-semibold  ${getTagStyles(job.type)}`}
-            >
-              {job.type}
-            </span>
-            <div className="w-[1px] h-4 bg-surface-border self-center" />
-            {job.categories.map((cat) => (
+          <div className="flex flex-col gap-3 mt-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span
-                key={cat}
-                className={`px-3 py-1 rounded-full text-[12px] font-semibold border ${getTagStyles(cat)}`}
+                className={`px-3 py-1 text-[12px] font-semibold ${getTagStyles(job.type)}`}
               >
-                {cat}
+                {job.type}
               </span>
-            ))}
-            {job.createdAt && (
-              <>
-                <div className="w-[1px] h-4 bg-surface-border self-center mx-1" />
-                <span className="text-text-muted text-[12px] font-medium">
-                  {formatDate(job.createdAt)}
-                </span>
-              </>
+            </div>
+
+            {job.categories && job.categories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {job.categories.map((cat) => (
+                  <span
+                    key={cat}
+                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border ${getTagStyles(cat)}`}
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </div>

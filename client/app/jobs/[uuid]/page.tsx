@@ -110,7 +110,7 @@ export default function JobDetailsPage({
                   />
                 ) : (
                   <span className="text-white font-bold text-4xl tracking-wider">
-                    {getInitials(job.company?.name || job.title)}
+                    {getInitials(job.title)}
                   </span>
                 )}
               </div>
@@ -257,12 +257,13 @@ export default function JobDetailsPage({
                 <div className="flex flex-wrap gap-2">
                   {job.categories && job.categories.length > 0 ? (
                     job.categories.map((cat: any) => (
-                      <span
+                      <Link
                         key={cat.id}
-                        className="bg-surface-light text-text-body px-3 py-1 rounded-full text-sm font-medium border border-surface-border"
+                        href={`/jobs?category=${cat.name.toLowerCase().replace(/\s+/g, "-")}`}
+                        className="bg-surface-light text-text-body px-3 py-1 rounded-full text-sm font-medium border border-surface-border hover:border-brand-primary hover:text-brand-primary transition-colors duration-200"
                       >
                         {cat.name}
-                      </span>
+                      </Link>
                     ))
                   ) : (
                     <span className="text-text-muted text-sm italic">
