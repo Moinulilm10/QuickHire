@@ -1,7 +1,9 @@
 "use client";
 
 import { Job } from "@/data/jobsData";
+import { getInitials } from "@/utils/stringUtils";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 interface FeaturedJobCardProps {
@@ -34,78 +36,83 @@ export default function FeaturedJobCard({
   const delay = index * 100;
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`
-        relative p-6 bg-white border border-surface-border transition-all duration-300
-        ${isVisible ? "animate-fade-in-up" : "opacity-0"}
-      `}
-      style={{
-        animationDelay: isVisible ? `${delay}ms` : undefined,
-        transform: hovered ? "translateY(-8px)" : "translateY(0)",
-        boxShadow: hovered ? "0 20px 40px rgba(0,0,0,0.08)" : "none",
-        borderColor: hovered ? "var(--brand-primary)" : "var(--surface-border)",
-      }}
-    >
-      {/* Header: Logo & Type */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="relative w-12 h-12 flex items-center justify-center overflow-hidden">
-          {job.logoUrl ? (
-            <Image
-              src={job.logoUrl}
-              alt={job.company}
-              width={48}
-              height={48}
-              className="object-contain"
-            />
-          ) : (
-            <div
-              className="w-full h-full flex items-center justify-center font-bold text-xl rounded-sm"
-              style={{
-                backgroundColor: job.logoColor || "var(--brand-primary-light)",
-                color: job.logoColor === "#000000" ? "#ffffff" : "#ffffff",
-              }}
-            >
-              {job.company.charAt(0)}
-            </div>
-          )}
-        </div>
-        <span className="px-3 py-1 border border-brand-primary text-brand-primary text-xs font-semibold">
-          {job.type}
-        </span>
-      </div>
-
-      {/* Body: Title & Meta */}
-      <div className="mb-4">
-        <h3 className="text-[18px] font-bold text-text-dark leading-snug mb-1 group-hover:text-brand-primary transition-colors duration-300">
-          {job.title}
-        </h3>
-        <div className="flex items-center text-text-muted text-sm gap-1.5 font-medium">
-          <span>{job.company}</span>
-          <span className="text-text-light">•</span>
-          <span>{job.location}</span>
-        </div>
-      </div>
-
-      {/* Description */}
-      <p className="text-text-muted text-sm leading-relaxed mb-6 line-clamp-2">
-        {job.description}
-      </p>
-
-      {/* Footer: Tags */}
-      <div className="flex flex-wrap gap-2">
-        {job.categories.map((cat) => (
-          <span
-            key={cat}
-            className={`px-4 py-1.5 rounded-full text-[12px] font-semibold border ${getTagStyles(
-              cat,
-            )}`}
-          >
-            {cat}
+    <Link href={`/jobs/${job.uuid}`} className="block group">
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={`
+          relative p-6 bg-white border border-surface-border transition-all duration-300 h-full
+          ${isVisible ? "animate-fade-in-up" : "opacity-0"}
+        `}
+        style={{
+          animationDelay: isVisible ? `${delay}ms` : undefined,
+          transform: hovered ? "translateY(-8px)" : "translateY(0)",
+          boxShadow: hovered ? "0 20px 40px rgba(0,0,0,0.08)" : "none",
+          borderColor: hovered
+            ? "var(--brand-primary)"
+            : "var(--surface-border)",
+        }}
+      >
+        {/* Header: Logo & Type */}
+        <div className="flex justify-between items-start mb-4">
+          <div className="relative w-12 h-12 flex items-center justify-center overflow-hidden">
+            {job.logoUrl ? (
+              <Image
+                src={job.logoUrl}
+                alt={job.company}
+                width={48}
+                height={48}
+                className="object-contain"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center font-bold text-xl rounded-sm"
+                style={{
+                  backgroundColor:
+                    job.logoColor || "var(--brand-primary-light)",
+                  color: "#ffffff",
+                }}
+              >
+                {getInitials(job.title)}
+              </div>
+            )}
+          </div>
+          <span className="px-3 py-1 border border-brand-primary text-brand-primary text-xs font-semibold">
+            {job.type}
           </span>
-        ))}
+        </div>
+
+        {/* Body: Title & Meta */}
+        <div className="mb-4">
+          <h3 className="text-[18px] font-bold text-text-dark leading-snug mb-1 group-hover:text-brand-primary transition-colors duration-300 line-clamp-1">
+            {job.title}
+          </h3>
+          <div className="flex items-center text-text-muted text-sm gap-1.5 font-medium">
+            <span>{job.company}</span>
+            <span className="text-text-light">•</span>
+            <span>{job.location}</span>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-text-muted text-sm leading-relaxed mb-6 line-clamp-2">
+          {job.description}
+        </p>
+
+        {/* Footer: Tags */}
+        <div className="flex flex-wrap gap-2">
+          {job.categories.map((cat) => (
+            <span
+              key={cat}
+              className={`px-4 py-1.5 rounded-full text-[12px] font-semibold border ${getTagStyles(
+                cat,
+              )}`}
+            >
+              {cat}
+            </span>
+          ))}
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

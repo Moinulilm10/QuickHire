@@ -52,6 +52,18 @@ exports.getLatestJobs = async (req, res, next) => {
   }
 };
 
+exports.getFeaturedJobs = async (req, res, next) => {
+  try {
+    const jobs = await jobModel.getFeaturedJobs();
+    res.status(200).json({
+      success: true,
+      data: jobs,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.createJob = async (req, res, next) => {
   try {
     const job = await jobModel.createJob(req.body);

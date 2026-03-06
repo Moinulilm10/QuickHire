@@ -1,6 +1,7 @@
 "use client";
 
-import { featuredJobs } from "@/data/jobsData";
+import { Job } from "@/data/jobsData";
+import { jobService } from "@/services/job.service";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +10,38 @@ import FeaturedJobCard from "./FeaturedJobCard";
 export default function FeaturedJobs() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedJobs = async () => {
+      try {
+        const data = await jobService.getFeaturedJobs();
+        if (data) {
+          const formatted = data.map((job: any) => ({
+            id: job.id.toString(),
+            uuid: job.uuid,
+            title: job.title,
+            company: job.company?.name || "Unknown Company",
+            location: job.location || "Remote",
+            type: job.type || "Full Time",
+            categories: job.categories?.map((c: any) => c.name) || [],
+            logoColor: job.logoColor || "#0061FF",
+            logoUrl: job.logo,
+            description: job.description,
+            createdAt: job.createdAt,
+          }));
+          setJobs(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to fetch featured jobs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedJobs();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -57,14 +90,21 @@ export default function FeaturedJobs() {
 
         {/* Jobs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 tracking-tight">
-          {featuredJobs.map((job, index) => (
-            <FeaturedJobCard
-              key={job.id}
-              job={job}
-              index={index}
-              isVisible={isVisible}
-            />
-          ))}
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[380px] bg-white/50 animate-pulse rounded border border-surface-border shadow-sm"
+                ></div>
+              ))
+            : jobs.map((job, index) => (
+                <FeaturedJobCard
+                  key={job.id}
+                  job={job}
+                  index={index}
+                  isVisible={isVisible}
+                />
+              ))}
         </div>
       </div>
     </section>

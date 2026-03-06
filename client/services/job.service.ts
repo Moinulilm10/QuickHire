@@ -14,6 +14,18 @@ export const jobService = {
   },
 
   /**
+   * Fetch featured jobs based on specific criteria (Remote/Hybrid + Recent).
+   */
+  async getFeaturedJobs() {
+    const res = await fetch(`${apiUrl}/jobs/featured`);
+    const data = await res.json();
+    if (data.success) {
+      return data.data;
+    }
+    throw new Error(data.message || "Failed to fetch featured jobs");
+  },
+
+  /**
    * Fetch a complete, unomitted job entity directly via UUID or ID for Details Page mapping.
    */
   async getJobDetails(identifier: string) {

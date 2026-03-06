@@ -38,6 +38,7 @@ function JobsPageContent() {
         if (data.success) {
           const formatted = data.jobs.map((job: any) => ({
             id: job.id.toString(),
+            uuid: job.uuid,
             title: job.title,
             company: job.company?.name || "Unknown Company",
             location: job.location || "Remote",

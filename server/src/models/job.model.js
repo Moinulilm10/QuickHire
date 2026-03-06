@@ -16,8 +16,6 @@ class JobModel {
   }
 
   async getJobById(identifier) {
-    // If identifier is a number (or a string of numbers), assume it's the internal ID.
-    // Otherwise, assume it is the string UUID.
     const isNumeric = /^\d+$/.test(identifier);
 
     return await prisma.job.findUnique({
@@ -64,6 +62,21 @@ class JobModel {
     }
 
     return jobs;
+  }
+
+  async getFeaturedJobs() {
+    return await prisma.job.findMany({
+      where: {
+        OR: [{ type: "Remote" }, { type: "Hybrid" }],
+        status: "active",
+      },
+      include: {
+        company: true,
+        categories: true,
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 8,
+    });
   }
 
   async createJob(jobData) {
