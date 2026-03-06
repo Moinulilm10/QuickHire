@@ -50,10 +50,11 @@ exports.getDashboardStats = async (req, res) => {
       count: comp._count.applications,
     }));
 
-    // 3. Jobs over time (histogram for last 6 months)
-    const jobs = await prisma.job.findMany({
-      select: { createdAt: true },
-    });
+    // 3. Jobs & Users over time (histogram for last 6 months)
+    const [jobs, users] = await Promise.all([
+      prisma.job.findMany({ select: { createdAt: true } }),
+      prisma.user.findMany({ select: { createdAt: true } }),
+    ]);
 
     const monthNames = [
       "Jan",
@@ -78,6 +79,7 @@ exports.getDashboardStats = async (req, res) => {
         month: monthNames[d.getMonth()],
         year: d.getFullYear(),
         jobs: 0,
+        users: 0,
       });
     }
 
@@ -89,6 +91,18 @@ exports.getDashboardStats = async (req, res) => {
           jobDate.getFullYear() === m.year
         ) {
           m.jobs++;
+        }
+      });
+    });
+
+    users.forEach((user) => {
+      const userDate = new Date(user.createdAt);
+      lastSixMonths.forEach((m) => {
+        if (
+          userDate.getMonth() === monthNames.indexOf(m.month) &&
+          userDate.getFullYear() === m.year
+        ) {
+          m.users++;
         }
       });
     });

@@ -1,7 +1,13 @@
 "use client";
 
 import Card from "@/components/ui/Card";
-import { Briefcase, Building2, FileText, Loader2 } from "lucide-react";
+import {
+  Briefcase,
+  Building2,
+  FileText,
+  Loader2,
+  TrendingUp,
+} from "lucide-react";
 import { use } from "react";
 import {
   Area,
@@ -25,7 +31,7 @@ interface DashboardResponse {
   };
   charts?: {
     jobsByCategory: { name: string; count: number }[];
-    jobsOverTime: { month: string; jobs: number }[];
+    jobsOverTime: { month: string; jobs: number; users: number }[];
     topCompaniesByApplicants: { name: string; count: number }[];
   };
   message?: string;
@@ -132,6 +138,7 @@ export function DashboardDataContent({
           </div>
         </Card>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <Card className="animate-fade-in-up">
           <h3 className="text-base font-bold text-foreground mb-4">
             Jobs Over Time
@@ -167,6 +174,52 @@ export function DashboardDataContent({
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorJobs)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-text-muted">
+                No trend data available
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="animate-fade-in-up">
+          <h3 className="text-base font-bold text-foreground mb-4">
+            Users Over Time
+          </h3>
+          <div className="w-full h-64">
+            {charts?.jobsOverTime?.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={charts.jobsOverTime}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F97316" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                  />
+                  <YAxis tick={{ fontSize: 12, fill: "#64748b" }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#fff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="users"
+                    stroke="#F97316"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorUsers)"
                   />
                 </AreaChart>
               </ResponsiveContainer>

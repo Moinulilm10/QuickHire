@@ -5,10 +5,14 @@ import {
   DashboardLoadingSkeleton,
 } from "@/components/dashboard/DashboardDataContent";
 import { dashboardService } from "@/services/dashboard.service";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 export default function DashboardPage() {
-  const [dataPromise] = useState(() => dashboardService.getStats());
+  const [dataPromise, setDataPromise] = useState<Promise<any> | null>(null);
+
+  useEffect(() => {
+    setDataPromise(dashboardService.getStats());
+  }, []);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -19,9 +23,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <Suspense fallback={<DashboardLoadingSkeleton />}>
-        <DashboardDataContent dataPromise={dataPromise} />
-      </Suspense>
+      {dataPromise ? (
+        <Suspense fallback={<DashboardLoadingSkeleton />}>
+          <DashboardDataContent dataPromise={dataPromise} />
+        </Suspense>
+      ) : (
+        <DashboardLoadingSkeleton />
+      )}
     </div>
   );
 }
