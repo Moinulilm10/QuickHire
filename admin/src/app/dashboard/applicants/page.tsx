@@ -356,9 +356,9 @@ export default function ApplicantsPage() {
     applicantsInitialState,
   );
   const [isPending, startTransition] = useTransition();
-  const [dataPromise, setDataPromise] = useState<{
+  const [dataPromise, setDataPromise] = useState<Promise<{
     applications: any[];
-  } | null>(null);
+  }> | null>(null);
 
   const debouncedSearch = useDebounce(state.searchTerm, 400);
 
