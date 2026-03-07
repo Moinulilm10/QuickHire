@@ -31,7 +31,6 @@ export default function LatestJobCard({
   index,
   isVisible,
 }: LatestJobCardProps) {
-  console.log("🚀 ~ LatestJobCard ~ job:", job);
   const [hovered, setHovered] = useState(false);
   const delay = index * 100;
 
