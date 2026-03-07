@@ -29,7 +29,41 @@ QuickHire is a comprehensive job portal platform designed to connect employers w
 | **Job Application**      | ![Application](./image/job-application-page.png) |
 | **Applied Jobs Section** | ![Applied Jobs](./image/applied-job-section.png) |
 
-## 🚀 Tech Stack & Tools
+## �️ Admin Interface (Back-office)
+
+> [!NOTE]
+> Comprehensive management dashboard for system administrators.
+
+### Dashboard & Auth
+
+| Page                | Preview                                                    |
+| :------------------ | :--------------------------------------------------------- |
+| **Admin Login**     | ![Admin Login](./image/admin/admin-login-page.png)         |
+| **Admin Dashboard** | ![Admin Dashboard](./image/admin/admin-dashboard-page.png) |
+
+### Management Sections
+
+| Section                    | Preview                                                             |
+| :------------------------- | :------------------------------------------------------------------ |
+| **Jobs Management**        | ![Jobs Management](./image/admin/admin-jobs-page.png)               |
+| **Company Management**     | ![Company Management](./image/admin/admin-company-section.png)      |
+| **Category Management**    | ![Category Management](./image/admin/admin-categories-section.png)  |
+| **Job Applicant Tracking** | ![Applicant Tracking](./image/admin/admin-jobapplicant-section.png) |
+| **User Management**        | ![User Management](./image/admin/admin-user-section.png)            |
+
+### Action Workflows
+
+| Action               | Preview                                                           |
+| :------------------- | :---------------------------------------------------------------- |
+| **Create Job**       | ![Create Job](./image/admin/admin-job-create-modal.png)           |
+| **Job Details View** | ![Job Details](./image/admin/admin-job-details-page.png)          |
+| **Update Job**       | ![Update Job](./image/admin/admin-job-update-page.png)            |
+| **Create Company**   | ![Create Company](./image/admin/admin-company-create-modal.png)   |
+| **Update Company**   | ![Update Company](./image/admin/admin-company-update-modal.png)   |
+| **Create Category**  | ![Create Category](./image/admin/admin-category-create-modal.png) |
+| **Update Category**  | ![Update Category](./image/admin/admin-category-update-modal.png) |
+
+## �🚀 Tech Stack & Tools
 
 ### Client (Frontend)
 
