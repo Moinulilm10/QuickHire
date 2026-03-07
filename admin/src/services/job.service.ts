@@ -13,8 +13,13 @@ export interface JobPayload {
 }
 
 export const jobService = {
-  async getJobs(page = 1, limit = 8) {
-    return apiClient(`/jobs?page=${page}&limit=${limit}`);
+  async getJobs(page = 1, limit = 8, search = "") {
+    const query = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      ...(search ? { search } : {}),
+    });
+    return apiClient(`/jobs?${query.toString()}`);
   },
 
   async createJob(data: JobPayload) {

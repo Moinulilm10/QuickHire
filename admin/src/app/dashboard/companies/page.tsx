@@ -11,7 +11,7 @@ import {
   companiesReducer,
   initialCompaniesState,
 } from "@/reducers/companies.reducer";
-import { companyService } from "@/services/company.service";
+import { CompanyPayload, companyService } from "@/services/company.service";
 import { alertService } from "@/utils/alertService";
 import { Loader2, Plus } from "lucide-react";
 import {
@@ -156,8 +156,12 @@ export default function CompaniesPage() {
             <div className="p-6 overflow-y-auto">
               <CompanyForm
                 formData={state.formData}
-                onChange={(field, value) =>
-                  dispatch({ type: "SET_FORM_FIELD", field, value })
+                onChange={(field: keyof CompanyPayload, value: string | null) =>
+                  dispatch({
+                    type: "SET_FORM_FIELD",
+                    field,
+                    value,
+                  })
                 }
                 onSubmit={handleSave}
               />

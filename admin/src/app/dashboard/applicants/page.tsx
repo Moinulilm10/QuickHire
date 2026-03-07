@@ -359,14 +359,14 @@ export default function ApplicantsPage() {
     applicantsInitialState,
   );
   const [isPending, startTransition] = useTransition();
-  const [dataPromise, setDataPromise] =
+  const [initialDataPromise, setInitialDataPromise] =
     useState<Promise<ApplicantsData> | null>(null);
 
   const debouncedSearch = useDebounce(state.searchTerm, 400);
 
   // Initialize data on client mount to avoid hydration mismatch
   useEffect(() => {
-    setDataPromise(fetchApplications());
+    setInitialDataPromise(fetchApplications());
   }, []);
 
   // Update debounced search in state
@@ -376,11 +376,11 @@ export default function ApplicantsPage() {
 
   const refreshData = () => {
     startTransition(() => {
-      setDataPromise(fetchApplications());
+      setInitialDataPromise(fetchApplications());
     });
   };
 
-  if (!dataPromise) {
+  if (!initialDataPromise) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <ApplicantsSkeleton />
@@ -394,7 +394,7 @@ export default function ApplicantsPage() {
     >
       <Suspense fallback={<ApplicantsSkeleton />}>
         <ApplicantsContent
-          dataPromise={dataPromise}
+          dataPromise={initialDataPromise}
           state={state}
           dispatch={dispatch}
           refreshData={refreshData}

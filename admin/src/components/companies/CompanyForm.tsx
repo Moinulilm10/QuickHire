@@ -1,16 +1,13 @@
 "use client";
 
+import { CompanyPayload } from "@/services/company.service";
 import React from "react";
 import Input from "../ui/Input";
 import LogoUpload from "../ui/LogoUpload";
 
 interface CompanyFormProps {
-  formData: {
-    name: string;
-    location: string;
-    logo: string | null;
-  };
-  onChange: (field: string, value: any) => void;
+  formData: CompanyPayload;
+  onChange: (field: keyof CompanyPayload, value: string | null) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 

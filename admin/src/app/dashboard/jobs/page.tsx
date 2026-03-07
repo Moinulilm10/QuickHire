@@ -32,7 +32,7 @@ export default function JobsPage() {
     const p = page ?? state.currentPage;
     const s = search ?? debouncedSearch;
     startTransition(() => {
-      setDataPromise(jobService.getJobs(p, s));
+      setDataPromise(jobService.getJobs(p, 10, s));
     });
   };
 
