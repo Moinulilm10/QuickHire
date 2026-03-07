@@ -1,11 +1,9 @@
 import { CategoryData } from "@/components/ui/CategoryCard";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+import { apiService } from "./api.service";
 
 export const categoryService = {
   async getTopCategories(limit: number = 8): Promise<CategoryData[]> {
-    const res = await fetch(`${apiUrl}/categories?limit=${limit}&sort=jobs`);
-    const data = await res.json();
+    const data = await apiService.get(`/categories?limit=${limit}&sort=jobs`);
     if (data.success) {
       return data.data;
     }

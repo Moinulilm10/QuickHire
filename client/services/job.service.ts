@@ -1,12 +1,11 @@
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+import { apiService } from "./api.service";
 
 export const jobService = {
   /**
    * Fetch the filtered payload of the latest jobs directly for homepage UI mapping.
    */
   async getLatestJobs() {
-    const res = await fetch(`${apiUrl}/jobs/latest`);
-    const data = await res.json();
+    const data = await apiService.get("/jobs/latest");
     if (data.success) {
       return data.data;
     }
@@ -17,8 +16,7 @@ export const jobService = {
    * Fetch featured jobs based on specific criteria (Remote/Hybrid + Recent).
    */
   async getFeaturedJobs() {
-    const res = await fetch(`${apiUrl}/jobs/featured`);
-    const data = await res.json();
+    const data = await apiService.get("/jobs/featured");
     if (data.success) {
       return data.data;
     }
@@ -28,22 +26,15 @@ export const jobService = {
   /**
    * Fetch a complete, unomitted job entity directly via UUID or ID for Details Page mapping.
    */
-  /**
-   * Fetch a complete, unomitted job entity directly via UUID or ID for Details Page mapping.
-   */
   async getJobDetails(identifier: string, token?: string) {
-    const headers: any = {
-      "Content-Type": "application/json",
-    };
-
+    const options: any = {};
     if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      options.headers = {
+        Authorization: `Bearer ${token}`,
+      };
     }
 
-    const res = await fetch(`${apiUrl}/jobs/${identifier}`, {
-      headers,
-    });
-    const data = await res.json();
+    const data = await apiService.get(`/jobs/${identifier}`, options);
     if (data.success) {
       return data.data;
     }

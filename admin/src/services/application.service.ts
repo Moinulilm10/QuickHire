@@ -1,60 +1,27 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+import { apiClient } from "./apiClient";
 
 export const applicationService = {
   async getAllApplications() {
-    const token = localStorage.getItem("adminToken");
-    const res = await fetch(`${API_URL}/applications`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
+    const data = await apiClient("/applications", {
+      auth: true,
     });
-
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-      }
-      const data = await res.json();
-      throw new Error(data.message || "Failed to fetch applications");
-    }
-
-    return res.json();
+    return data;
   },
 
   async updateApplicationStatus(id: number, status: string) {
-    const token = localStorage.getItem("adminToken");
-    const res = await fetch(`${API_URL}/applications/${id}/status`, {
+    const data = await apiClient(`/applications/${id}/status`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
+      body: { status },
+      auth: true,
     });
-
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "Failed to update status");
-    }
-
-    return res.json();
+    return data;
   },
 
   async deleteApplication(id: number) {
-    const token = localStorage.getItem("adminToken");
-    const res = await fetch(`${API_URL}/applications/${id}`, {
+    const data = await apiClient(`/applications/${id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      auth: true,
     });
-
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "Failed to delete application");
-    }
-
-    return res.json();
+    return data;
   },
 };

@@ -1,4 +1,4 @@
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+import { apiService } from "./api.service";
 
 export const companyService = {
   /**
@@ -10,8 +10,7 @@ export const companyService = {
       limit: limit.toString(),
       ...(search ? { search } : {}),
     });
-    const res = await fetch(`${apiUrl}/companies?${query.toString()}`);
-    const data = await res.json();
+    const data = await apiService.get(`/companies?${query.toString()}`);
     if (data.success) {
       return data;
     }
@@ -22,8 +21,7 @@ export const companyService = {
    * Fetch a complete, unomitted company entity directly via UUID or ID for Details Page mapping.
    */
   async getCompanyDetails(identifier: string) {
-    const res = await fetch(`${apiUrl}/companies/${identifier}`);
-    const data = await res.json();
+    const data = await apiService.get(`/companies/${identifier}`);
     if (data.success) {
       return data.data;
     }
