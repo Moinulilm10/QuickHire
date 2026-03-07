@@ -21,6 +21,7 @@ app.use(
       "http://127.0.0.1:3000",
       "http://localhost:3001",
       "https://quick-hire-sable-mu.vercel.app",
+      "https://quick-hire-rh1o.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
