@@ -19,7 +19,11 @@ import {
 } from "react";
 
 // ─── Data Fetcher ────────────────────────────────────────
-function fetchApplications(): Promise<{ applications: any[] }> {
+interface ApplicantsData {
+  applications: any[];
+}
+
+function fetchApplications(): Promise<ApplicantsData> {
   return applicationService
     .getAllApplications()
     .then((res) => ({
@@ -35,14 +39,13 @@ function fetchApplications(): Promise<{ applications: any[] }> {
     });
 }
 
-// ─── Inner Content ───────────────────────────────────────
 function ApplicantsContent({
   dataPromise,
   state,
   dispatch,
   refreshData,
 }: {
-  dataPromise: Promise<{ applications: any[] }>;
+  dataPromise: Promise<ApplicantsData>;
   state: any;
   dispatch: any;
   refreshData: () => void;
@@ -356,9 +359,8 @@ export default function ApplicantsPage() {
     applicantsInitialState,
   );
   const [isPending, startTransition] = useTransition();
-  const [dataPromise, setDataPromise] = useState<Promise<{
-    applications: any[];
-  }> | null>(null);
+  const [dataPromise, setDataPromise] =
+    useState<Promise<ApplicantsData> | null>(null);
 
   const debouncedSearch = useDebounce(state.searchTerm, 400);
 
@@ -392,7 +394,7 @@ export default function ApplicantsPage() {
     >
       <Suspense fallback={<ApplicantsSkeleton />}>
         <ApplicantsContent
-          dataPromise={dataPromise as any}
+          dataPromise={dataPromise}
           state={state}
           dispatch={dispatch}
           refreshData={refreshData}
