@@ -30,7 +30,30 @@ export async function apiClient<T = any>(
     ...(body ? { body: JSON.stringify(body) } : {}),
   };
 
-  const res = await fetch(`${API_URL}${endpoint}`, config);
+  const url = `${API_URL}${endpoint}`;
+  const res = await fetch(url, config);
+
+  if (!res.ok) {
+    let errorMsg = `API Error: ${res.status} ${res.statusText}`;
+    try {
+      const errorData = await res.json();
+      errorMsg = errorData.message || errorMsg;
+    } catch (e) {
+      // Not JSON
+    }
+    console.error(`Fetch failed for ${url}:`, errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  const contentType = res.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    const text = await res.text();
+    console.error(
+      `Expected JSON but got ${contentType} for ${url}. Response starts with: ${text.substring(0, 100)}`,
+    );
+    throw new Error(`Unexpected response format from ${endpoint}`);
+  }
+
   return res.json();
 }
 

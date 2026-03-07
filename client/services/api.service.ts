@@ -5,12 +5,36 @@ interface ApiOptions extends RequestInit {
 }
 
 const handleResponse = async (response: Response) => {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = (data && data.message) || response.statusText;
-    return Promise.reject({ status: response.status, message: error });
+  const contentType = response.headers.get("content-type");
+  const isJson = contentType && contentType.includes("application/json");
+
+  let data;
+  if (isJson) {
+    data = await response.json().catch(() => null);
   }
-  return data;
+
+  if (!response.ok) {
+    let errorMsg = (data && data.message) || response.statusText;
+
+    if (!isJson) {
+      const text = await response.text();
+      console.error(
+        `API Error (${response.status}): Expected JSON but got ${contentType}. Response starts with: ${text.substring(0, 100)}`,
+      );
+      errorMsg = `Server error: ${response.status}`;
+    }
+
+    return Promise.reject({ status: response.status, message: errorMsg });
+  }
+
+  if (!isJson && response.status !== 204) {
+    const text = await response.text();
+    console.warn(
+      `API Warning: Expected JSON but got ${contentType}. Response starts with: ${text.substring(0, 100)}`,
+    );
+  }
+
+  return data || {};
 };
 
 export const apiService = {
