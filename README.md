@@ -5,7 +5,29 @@ QuickHire is a comprehensive job portal platform designed to connect employers w
 ## 🖼️ Quick Guide (Images)
 
 > [!NOTE]
-> Add your guide images here for a visual walkthrough.
+> Below are the visual guides for the QuickHire platform.
+
+### User Interface
+
+| Page                   | Preview                                          |
+| :--------------------- | :----------------------------------------------- |
+| **Home Page**          | ![Home Page](./image/Home-page.png)              |
+| **Jobs Listing**       | ![Jobs Page](./image/jobs-page.png)              |
+| **Job Details**        | ![Job Details](./image/job-details-page.png)     |
+| **Category-wise Jobs** | ![Category Page](./image/Category-wise-page.png) |
+| **Featured Jobs**      | ![Featured Jobs](./image/Feature-job-page.png)   |
+| **Latest Jobs**        | ![Latest Jobs](./image/latest-job-page.png)      |
+| **Companies**          | ![Companies](./image/companies-page.png)         |
+
+### User Workflow
+
+| Step                     | Preview                                          |
+| :----------------------- | :----------------------------------------------- |
+| **Sign Up**              | ![Signup](./image/signup-page.png)               |
+| **Login**                | ![Login](./image/login.png)                      |
+| **Profile Management**   | ![Profile](./image/profile-page.png)             |
+| **Job Application**      | ![Application](./image/job-application-page.png) |
+| **Applied Jobs Section** | ![Applied Jobs](./image/applied-job-section.png) |
 
 ## 🚀 Tech Stack & Tools
 
@@ -178,18 +200,6 @@ The project uses **Jest** across all modules.
 | `NEXTAUTH_SECRET`      | Secret for NextAuth session |
 | `GOOGLE_CLIENT_ID`     | OAuth Client ID             |
 | `GOOGLE_CLIENT_SECRET` | OAuth Client Secret         |
-
----
-
-### User Dashboard
-
-![User Dashboard Placeholder](/images/user-dashboard.png)
-_Quick overview of the user application flow._
-
-### Admin Control Panel
-
-![Admin Dashboard Placeholder](/images/admin-dashboard.png)
-_Management interface for job listings and applicants._
 
 ---
 
