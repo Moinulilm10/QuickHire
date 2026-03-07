@@ -2,6 +2,11 @@
 
 QuickHire is a comprehensive job portal platform designed to connect employers with potential candidates. It features a robust job searching and application system for users, a detailed dashboard for administrators to manage jobs, companies, and applicants, and a powerful backend to handle data and authentication.
 
+## 🖼️ Quick Guide (Images)
+
+> [!NOTE]
+> Add your guide images here for a visual walkthrough.
+
 ## 🚀 Tech Stack & Tools
 
 ### Client (Frontend)
@@ -175,11 +180,6 @@ The project uses **Jest** across all modules.
 | `GOOGLE_CLIENT_SECRET` | OAuth Client Secret         |
 
 ---
-
-## 🖼️ Quick Guide (Images)
-
-> [!NOTE]
-> Add your guide images here for a visual walkthrough.
 
 ### User Dashboard
 
