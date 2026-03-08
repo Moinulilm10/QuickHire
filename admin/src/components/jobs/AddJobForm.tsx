@@ -166,10 +166,14 @@ export default function AddJobForm({
           />
 
           <div className="w-full">
-            <label className="block text-sm font-semibold text-foreground mb-1.5">
+            <label
+              htmlFor="job-description"
+              className="block text-sm font-semibold text-foreground mb-1.5"
+            >
               Description
             </label>
             <textarea
+              id="job-description"
               placeholder="Job description..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}

@@ -11,12 +11,18 @@ export default function Input({
   error,
   icon,
   className = "",
+  id,
   ...props
 }: InputProps) {
+  const inputId = id || React.useId();
+
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-semibold text-foreground mb-1.5">
+        <label
+          htmlFor={inputId}
+          className="block text-sm font-semibold text-foreground mb-1.5"
+        >
           {label}
         </label>
       )}
@@ -27,6 +33,7 @@ export default function Input({
           </span>
         )}
         <input
+          id={inputId}
           className={`
             w-full rounded-lg border border-surface-border bg-surface px-4 py-2.5
             text-sm text-foreground placeholder:text-text-muted
