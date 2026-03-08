@@ -65,6 +65,7 @@ export default function DashboardLayout({
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-sidebar-text hover:text-white transition-colors"
+            aria-label="Close sidebar"
           >
             <X size={20} />
           </button>
@@ -116,6 +117,7 @@ export default function DashboardLayout({
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden text-foreground hover:text-primary transition-colors"
+            aria-label="Open sidebar"
           >
             <Menu size={22} />
           </button>
