@@ -17,7 +17,7 @@ export default function PdfPreviewModal({
 
   // Make sure it points to backend url if it's a relative path
   const fullUrl = pdfUrl.startsWith("/")
-    ? `${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5001"}${pdfUrl}`
+    ? `${(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api").replace(/\/api$/, "")}${pdfUrl}`
     : pdfUrl;
 
   return (
